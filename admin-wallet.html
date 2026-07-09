@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanPoints & Wallet — Ogbomọ́ Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="sidebar"></aside>
+  <div class="admin-topbar">
+    <span class="topbar-page-title">CleanPoints &amp; Wallet</span>
+    <div class="topbar-right">
+      <span class="topbar-lga-badge">All LGAs</span>
+      <span class="topbar-time mono" id="topbar-time"></span>
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <div class="kpi-grid" id="wallet-kpis"></div>
+
+    <div class="admin-grid-2" style="margin-top:1.25rem;">
+      <!-- Redemption queue -->
+      <div class="admin-panel">
+        <div class="panel-header">
+          <span class="panel-title">Redemption Queue</span>
+          <span class="badge badge-open" style="font-size:0.7rem;" id="queue-count"></span>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>User</th><th>LGA</th><th>Points</th><th>Cash</th><th>Approve</th></tr></thead>
+          <tbody id="redemption-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Top earners -->
+      <div class="admin-panel">
+        <div class="panel-header"><span class="panel-title">Top CleanPoints Earners</span></div>
+        <table class="data-table">
+          <thead><tr><th>User</th><th>LGA</th><th>Points</th><th>kg Recycled</th></tr></thead>
+          <tbody id="earners-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Transaction log -->
+    <div class="admin-panel">
+      <div class="panel-header"><span class="panel-title">Recent Drop-off Transactions</span></div>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>User</th><th>Hub</th><th>Material</th><th>Weight</th><th>Points Earned</th></tr></thead>
+        <tbody id="tx-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="admin-auth.js"></script>
+<script>
+AdminAuth.protectAdminPage('super_admin');
+document.getElementById('sidebar').innerHTML = buildSidebar('wallet');
+AdminAuth.renderSidebarUser();
+AdminAuth.markActiveSidebarLink();
+document.getElementById('sidebar-logout-btn').addEventListener('click', AdminAuth.logout);
+function tick(){ document.getElementById('topbar-time').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+tick(); setInterval(tick,1000);
+
+const QUEUE = [
+  { user:'Taiwo A.', lga:'Ogbomosho North', points:1200, cash:'₦1,200', id:'q1' },
+  { user:'Bisi O.',  lga:'Ogbomosho South', points:1000, cash:'₦1,000', id:'q2' },
+  { user:'Sade K.',  lga:'Oriire',          points:2000, cash:'₦2,000', id:'q3' },
+];
+const EARNERS = [
+  { user:'Sade K.',    lga:'Oriire',          pts:2840, kg:94 },
+  { user:'Emeka B.',   lga:'Ogbomosho North', pts:2210, kg:73 },
+  { user:'Taiwo A.',   lga:'Ogbomosho North', pts:1950, kg:65 },
+  { user:'Bisi O.',    lga:'Ogbomosho South', pts:1720, kg:57 },
+  { user:'Funmi T.',   lga:'Ogo-Oluwa',       pts:1380, kg:46 },
+];
+const TRANSACTIONS = [
+  { date:'Today 07:30', user:'Emeka B.',  hub:'Wazo Market Point',  material:'Plastic', weight:'4.2kg', pts:21 },
+  { date:'Today 07:10', user:'Sade K.',   hub:'Aarada Market Point', material:'Metal',   weight:'2.0kg', pts:16 },
+  { date:'Yesterday',   user:'Taiwo A.',  hub:'Wazo Market Point',  material:'Paper',   weight:'6.0kg', pts:18 },
+  { date:'Yesterday',   user:'Funmi T.',  hub:'Ajaawa Point',       material:'Plastic', weight:'3.5kg', pts:18 },
+  { date:'Jul 5',       user:'Bisi O.',   hub:'Aarada Market Point', material:'Metal',   weight:'1.8kg', pts:14 },
+];
+
+document.getElementById('wallet-kpis').innerHTML = `
+  <div class="kpi-card kpi-accent-gold"><span class="kpi-label">Total Points Issued</span><span class="kpi-value">48,200</span><span class="kpi-change kpi-up">↑ 1,240 this week</span></div>
+  <div class="kpi-card kpi-accent-green"><span class="kpi-label">Total Redeemed</span><span class="kpi-value">₦24,000</span><span class="kpi-change kpi-up">↑ ₦3,000 this week</span></div>
+  <div class="kpi-card kpi-accent-red"><span class="kpi-label">Pending Redemptions</span><span class="kpi-value">₦4,200</span><span class="kpi-change kpi-down">3 queued</span></div>
+  <div class="kpi-card kpi-accent"><span class="kpi-label">kg Recycled Total</span><span class="kpi-value">1,640</span><span class="kpi-change kpi-up">↑ 84kg this week</span></div>`;
+
+// Redemption queue
+let queue = [...QUEUE];
+document.getElementById('queue-count').textContent = queue.length + ' pending';
+function renderQueue() {
+  const tbody = document.getElementById('redemption-tbody');
+  tbody.innerHTML = '';
+  queue.forEach(q => {
+    tbody.innerHTML += `<tr id="qrow-${q.id}">
+      <td style="font-weight:500;">${q.user}</td>
+      <td style="color:var(--ink-soft);font-size:0.8rem;">${q.lga}</td>
+      <td class="mono">${q.points.toLocaleString()}</td>
+      <td class="mono" style="font-weight:700;">${q.cash}</td>
+      <td><button class="btn-admin btn-success-admin" onclick="approveRedeem('${q.id}')">Approve</button></td>
+    </tr>`;
+  });
+  if (!queue.length) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:1.2rem;">No pending redemptions</td></tr>';
+  document.getElementById('queue-count').textContent = queue.length + ' pending';
+}
+function approveRedeem(id) {
+  queue = queue.filter(q => q.id !== id);
+  renderQueue();
+}
+renderQueue();
+
+// Earners
+EARNERS.forEach(e => {
+  document.getElementById('earners-tbody').innerHTML += `<tr>
+    <td style="font-weight:500;">${e.user}</td>
+    <td style="color:var(--ink-soft);font-size:0.8rem;">${e.lga}</td>
+    <td class="mono" style="font-weight:700;">${e.pts.toLocaleString()}</td>
+    <td class="mono">${e.kg}</td>
+  </tr>`;
+});
+
+// Transactions
+TRANSACTIONS.forEach(t => {
+  document.getElementById('tx-tbody').innerHTML += `<tr>
+    <td style="color:var(--ink-soft);font-size:0.8rem;">${t.date}</td>
+    <td>${t.user}</td>
+    <td style="color:var(--ink-soft);">${t.hub}</td>
+    <td>${t.material}</td>
+    <td class="mono">${t.weight}</td>
+    <td class="mono" style="color:var(--green);font-weight:700;">+${t.pts} pts</td>
+  </tr>`;
+});
+
+function buildSidebar(active) {
+  return `<div class="sidebar-brand"><div class="sidebar-brand-name">OGBOMỌ́</div><div class="sidebar-brand-sub">Admin Portal</div></div>
+  <div id="sidebar-role-badge" class="sidebar-role-badge"><span class="sidebar-role-dot"></span><span id="sidebar-role-label">Super Admin</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Overview</div>
+    <a href="admin-dashboard.html" class="sidebar-link"><span class="icon">◼</span>Dashboard</a>
+    <div class="sidebar-section-label">Operations</div>
+    <a href="admin-reports.html" class="sidebar-link"><span class="icon">🎫</span>Reports<span class="notif-dot"></span></a>
+    <a href="admin-routes.html" class="sidebar-link"><span class="icon">🚛</span>Routes & Crews</a>
+    <div class="sidebar-section-label">Finance</div>
+    <a href="admin-wallet.html" class="sidebar-link ${active==='wallet'?'active':''}"><span class="icon">💰</span>CleanPoints & Wallet</a>
+    <div class="sidebar-section-label">Platform</div>
+    <a href="admin-users.html" class="sidebar-link"><span class="icon">👥</span>Users</a>
+    <div class="sidebar-section-label">Account</div>
+    <a href="index.html" class="sidebar-link"><span class="icon">↗</span>Public Site</a>
+  </nav>
+  <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-avatar" id="sidebar-avatar">KN</div><div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-user-name">Loading…</div><div class="sidebar-user-role" id="sidebar-user-role"></div></div></div><button class="sidebar-logout" id="sidebar-logout-btn">Sign out</button></div>`;
+}
+</script>
+</body>
+</html>

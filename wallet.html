@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet — Ogbomọ́</title>
+<meta name="description" content="Track your CleanPoints balance, log recyclable drop-offs, and redeem points for cash.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .rewards-layout { display:grid; grid-template-columns:1fr 1.3fr; gap:1.5rem; align-items:start; }
+  .balance-card { border-radius:var(--radius); background:var(--indigo); color:#fff; padding:1.8rem; display:flex; flex-direction:column; gap:0.5rem; }
+  .balance-number { font-family:'Space Mono', monospace; font-size:2.6rem; font-weight:700; }
+  .balance-unit { font-family:'Space Mono', monospace; font-size:0.8rem; opacity:0.75; }
+  .balance-progress { margin-top:0.7rem; height:8px; border-radius:999px; background:rgba(255,255,255,0.16); overflow:hidden; }
+  .balance-progress-bar { height:100%; width:0%; background:var(--gold); transition:width 0.3s ease; }
+  .balance-note { font-size:0.8rem; opacity:0.85; margin:0.6rem 0 0.9rem; }
+  .btn-redeem { background:var(--gold); color:var(--ink); width:100%; }
+  .btn-redeem:disabled { opacity:0.4; cursor:not-allowed; }
+
+  .rate-card, .dropoff-form { border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:1.3rem; box-shadow:var(--shadow-card); }
+  .rate-row { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:0.6rem; padding:0.6rem 0; border-bottom:1px solid var(--line); font-size:0.9rem; }
+  .rate-row:last-child { border-bottom:none; }
+  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .dot-plastic { background:#2B6E7A; }
+  .dot-metal { background:#5B5548; }
+  .dot-paper { background:#8A6A3C; }
+
+  .dropoff-form { margin-top:1rem; display:flex; flex-direction:column; gap:0.9rem; }
+  .field { display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem; font-weight:500; }
+  .field span { font-size:0.78rem; color:var(--ink-soft); }
+  select, input { font-family:'Work Sans', sans-serif; font-size:0.95rem; padding:0.7rem 0.85rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; }
+
+  @media (max-width:800px) { .rewards-layout { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div id="site-header-mount"></div>
+
+<main>
+  <section class="hero" style="padding-bottom:1.5rem;">
+    <div class="container hero-inner">
+      <span class="eyebrow">Èrè · Wallet</span>
+      <h1>Your CleanPoints balance</h1>
+      <p class="lede">Earn points for sorted recyclables, and redeem them for cash once you hit the threshold.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <div class="rewards-layout">
+        <div class="balance-card">
+          <span class="eyebrow" style="color:#C9C4B8;">Your balance</span>
+          <span class="balance-number" id="points-balance">0</span>
+          <span class="balance-unit">CleanPoints</span>
+          <div class="balance-progress"><div class="balance-progress-bar" id="progress-bar"></div></div>
+          <p class="balance-note"><span id="points-remaining">1,000</span> points to your next redemption at <span class="mono">₦1,000</span></p>
+          <button class="btn btn-redeem" id="redeem-btn" disabled>Redeem for cash</button>
+        </div>
+
+        <div>
+          <div class="rate-card">
+            <span class="eyebrow">Example rates <small style="text-transform:none; letter-spacing:0; color:var(--ink-soft); font-family:'Work Sans',sans-serif; font-size:0.72rem;">(illustrative — pending partner pricing)</small></span>
+            <div class="rate-row"><span class="dot dot-plastic"></span><span>Plastic</span><span class="mono">5 pts / kg</span></div>
+            <div class="rate-row"><span class="dot dot-metal"></span><span>Glass &amp; Metal</span><span class="mono">8 pts / kg</span></div>
+            <div class="rate-row"><span class="dot dot-paper"></span><span>Paper &amp; Cardboard</span><span class="mono">3 pts / kg</span></div>
+          </div>
+
+          <form class="dropoff-form" id="dropoff-form">
+            <span class="eyebrow">Log a drop-off</span>
+            <div class="field">
+              <span>Material</span>
+              <select id="dropoff-material" required>
+                <option value="" disabled selected>Select material</option>
+                <option value="plastic">Plastic</option>
+                <option value="metal">Glass &amp; Metal</option>
+                <option value="paper">Paper &amp; Cardboard</option>
+              </select>
+            </div>
+            <div class="field">
+              <span>Weight (kg)</span>
+              <input type="number" id="dropoff-kg" min="0.1" step="0.1" placeholder="e.g. 2.5" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add points</button>
+          </form>
+        </div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">This is a session-only prototype — points and balances reset on reload. A funded pilot would tie this to real hub check-ins and an actual cash-out partner.</p>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer-mount"></div>
+
+<script src="auth.js"></script>
+<script src="components.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.protectPage()) return;
+  });
+  const POINT_RATES = { plastic: 5, metal: 8, paper: 3 };
+  const REDEMPTION_THRESHOLD = 1000;
+  let pointsBalance = 0;
+
+  function renderBalance() {
+    document.getElementById('points-balance').textContent = pointsBalance.toLocaleString('en-US');
+    const remaining = Math.max(REDEMPTION_THRESHOLD - pointsBalance, 0);
+    document.getElementById('points-remaining').textContent = remaining.toLocaleString('en-US');
+    const pct = Math.min((pointsBalance / REDEMPTION_THRESHOLD) * 100, 100);
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('redeem-btn').disabled = pointsBalance < REDEMPTION_THRESHOLD;
+  }
+  renderBalance();
+
+  document.getElementById('dropoff-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const material = document.getElementById('dropoff-material').value;
+    const kg = parseFloat(document.getElementById('dropoff-kg').value);
+    if (!material || !kg || kg <= 0) return;
+    pointsBalance += Math.round(POINT_RATES[material] * kg);
+    renderBalance();
+    e.target.reset();
+  });
+
+  document.getElementById('redeem-btn').addEventListener('click', () => {
+    if (pointsBalance < REDEMPTION_THRESHOLD) return;
+    pointsBalance -= REDEMPTION_THRESHOLD;
+    renderBalance();
+    const btn = document.getElementById('redeem-btn');
+    btn.textContent = 'Redeemed ✓ (demo only)';
+    setTimeout(() => { btn.textContent = 'Redeem for cash'; }, 2500);
+  });
+</script>
+</body>
+</html>

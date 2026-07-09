@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Ogbomọ́</title>
+<meta name="description" content="Get in touch about piloting, partnering with, or funding Ogbomọ́.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .contact-layout { display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; align-items:start; }
+  .field { display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem; font-weight:500; margin-bottom:1rem; }
+  .field span { font-size:0.78rem; color:var(--ink-soft); }
+  input, select, textarea { font-family:'Work Sans', sans-serif; font-size:0.95rem; padding:0.75rem 0.9rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; width:100%; }
+  textarea { resize:vertical; }
+  .confirm-msg { display:none; background:var(--indigo-soft); color:var(--indigo); border-radius:var(--radius-sm); padding:1rem; font-size:0.9rem; margin-top:1rem; }
+  .confirm-msg.show { display:block; }
+  @media (max-width:800px) { .contact-layout { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div id="site-header-mount"></div>
+
+<main>
+  <section class="hero" style="padding-bottom:1.5rem;">
+    <div class="container hero-inner">
+      <span class="eyebrow">Contact</span>
+      <h1>Let's talk</h1>
+      <p class="lede">Whether you're a resident, a local government, a recycling company, or an investor — we'd like to hear from you.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container contact-layout">
+      <div>
+        <span class="eyebrow">Reach out</span>
+        <h2 style="margin-bottom:1rem;">Send a message</h2>
+        <form id="contact-form">
+          <div class="field"><span>Name</span><input type="text" required></div>
+          <div class="field"><span>Email</span><input type="email" required></div>
+          <div class="field">
+            <span>I'm reaching out as a...</span>
+            <select required>
+              <option value="" disabled selected>Select one</option>
+              <option>Resident</option>
+              <option>Local government representative</option>
+              <option>Recycling company</option>
+              <option>NGO / University</option>
+              <option>Investor</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field"><span>Message</span><textarea rows="5" required></textarea></div>
+          <button type="submit" class="btn btn-primary">Send message</button>
+        </form>
+        <div class="confirm-msg" id="confirm-msg">Thanks — this is a prototype form, so nothing was actually sent yet, but this is exactly how a real submission would confirm.</div>
+      </div>
+
+      <div>
+        <span class="eyebrow">Where we're focused</span>
+        <h2 style="margin-bottom:1rem;">Ogbomosoland, Oyo State</h2>
+        <p style="color:var(--ink-soft); margin-bottom:1.5rem;">Ogbomọ́ is currently focused on Ogbomosoland's five local governments: Ogbomosho North, Ogbomosho South, Oriire, Ogo-Oluwa, and Surulere.</p>
+        <div class="card-grid" style="grid-template-columns:1fr;">
+          <div class="feature-card"><h3>For partnership inquiries</h3><p>Local government, recycling, university, and technology partners — see the <a href="partners.html" style="color:var(--indigo); font-weight:600;">Partners page</a> for what we're looking for.</p></div>
+          <div class="feature-card"><h3>For investors</h3><p>See <a href="impact.html" style="color:var(--indigo); font-weight:600;">Impact</a> for the research and goals behind this pilot.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer-mount"></div>
+
+<script src="components.js"></script>
+<script>
+  document.getElementById('contact-form').addEventListener('submit', e => {
+    e.preventDefault();
+    document.getElementById('confirm-msg').classList.add('show');
+    e.target.reset();
+  });
+</script>
+</body>
+</html>

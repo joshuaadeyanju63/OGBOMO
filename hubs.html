@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hub Locator — Ogbomọ́</title>
+<meta name="description" content="Find recycling drop-off points across Ogbomosoland and what materials each accepts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .hub-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:1rem; }
+  .hub-card { border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow-card); padding:1.2rem; display:flex; flex-direction:column; gap:0.6rem; }
+  .hub-name { font-family:'Unbounded', sans-serif; font-size:0.95rem; }
+  .hub-zone { font-family:'Space Mono', monospace; font-size:0.72rem; color:var(--ink-soft); }
+  .hub-accepts { display:flex; gap:0.4rem; flex-wrap:wrap; }
+  .hub-tag { font-family:'Space Mono', monospace; font-size:0.68rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; background:var(--paper-tint); color:var(--ink-soft); }
+  .hub-status { align-self:flex-start; font-family:'Space Mono', monospace; font-size:0.66rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; }
+  .hub-status-proposed { background:var(--gold-soft); color:#93690F; }
+  .hub-status-discussion { background:var(--indigo-soft); color:var(--indigo); }
+</style>
+</head>
+<body>
+
+<div id="site-header-mount"></div>
+
+<main>
+  <section class="hero" style="padding-bottom:1.5rem;">
+    <div class="container hero-inner">
+      <span class="eyebrow">Ibùdó · Hub Locator</span>
+      <h1>Recycling drop-off hubs</h1>
+      <p class="lede">Proposed drop-off points across Ogbomosoland's markets and local government areas — none are live partnerships yet.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <div class="hub-grid" id="hub-grid"></div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">A production version of this locator would use a real mapping service (e.g. Google Maps Platform) with live GPS coordinates once hub agreements are in place. This directory view is a placeholder for that.</p>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer-mount"></div>
+
+<script src="auth.js"></script>
+<script src="components.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.protectPage()) return;
+  });
+  const HUBS = [
+    { name: 'Wazo Market Point', zone: 'Ogbomosho North', accepts: ['Plastic', 'Metal'], status: 'proposed' },
+    { name: 'Ayanyan Market Point', zone: 'Ogbomosho North', accepts: ['Plastic', 'Paper'], status: 'proposed' },
+    { name: 'Aarada Market Point', zone: 'Ogbomosho South', accepts: ['Plastic', 'Metal', 'Paper'], status: 'discussion' },
+    { name: 'Ikoyi-Ile LGA Yard', zone: 'Oriire', accepts: ['Metal', 'Paper'], status: 'proposed' },
+    { name: 'Ajaawa Collection Point', zone: 'Ogo-Oluwa', accepts: ['Plastic'], status: 'proposed' },
+    { name: 'Iresaadu Community Point', zone: 'Surulere', accepts: ['Plastic', 'Metal'], status: 'discussion' }
+  ];
+
+  const grid = document.getElementById('hub-grid');
+  HUBS.forEach(h => {
+    const card = document.createElement('div');
+    card.className = 'hub-card';
+    const statusLabel = h.status === 'discussion' ? 'Partner in discussion' : 'Proposed';
+    const statusClass = h.status === 'discussion' ? 'hub-status-discussion' : 'hub-status-proposed';
+    card.innerHTML = `
+      <span class="hub-status ${statusClass}">${statusLabel}</span>
+      <span class="hub-name">${h.name}</span>
+      <span class="hub-zone">${h.zone}</span>
+      <div class="hub-accepts">${h.accepts.map(a => `<span class="hub-tag">${a}</span>`).join('')}</div>
+    `;
+    grid.appendChild(card);
+  });
+</script>
+</body>
+</html>

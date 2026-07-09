@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule Pickup — Ogbomọ́</title>
+<meta name="description" content="Book your weekly waste pickup by local government, or report a missed pickup, overflow, or illegal dumping.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .sp-tabs { display:flex; gap:0.5rem; margin-bottom:2rem; border-bottom:1px solid var(--line); }
+  .sp-tab { padding:0.8rem 1.2rem; font-weight:600; font-size:0.92rem; color:var(--ink-soft); cursor:pointer; border-bottom:2px solid transparent; }
+  .sp-tab.active { color:var(--indigo); border-bottom-color:var(--indigo); }
+  .sp-panel { display:none; }
+  .sp-panel.active { display:block; }
+
+  .ticket-layout { display:grid; grid-template-columns:1.4fr 1fr; gap:2rem; align-items:start; }
+  .field { display:flex; flex-direction:column; gap:0.4rem; font-size:0.88rem; font-weight:500; margin-bottom:1rem; }
+  .field span { font-size:0.78rem; color:var(--ink-soft); }
+  input, select, textarea {
+    font-family:'Work Sans', sans-serif; font-size:0.95rem; padding:0.7rem 0.85rem;
+    border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; color:var(--ink);
+  }
+  textarea { resize:vertical; }
+  .ticket-card { border:1px solid var(--line); border-radius:var(--radius); background:var(--paper-tint); padding:1.2rem; }
+  .ticket-details { margin:0.8rem 0 0; display:flex; flex-direction:column; gap:0.5rem; font-size:0.85rem; }
+  .ticket-details div { display:flex; justify-content:space-between; }
+  .status-pill { font-family:'Space Mono', monospace; font-size:0.7rem; text-transform:uppercase; padding:0.25rem 0.6rem; border-radius:999px; background:var(--gold-soft); color:#93690F; }
+
+  .week-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:0.6rem; }
+  .day-card { border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; padding:0.9rem 0.7rem; min-height:110px; display:flex; flex-direction:column; gap:0.5rem; }
+  .day-card.is-today { border-color:var(--gold); border-width:2px; }
+  .day-name { font-family:'Space Mono', monospace; text-transform:uppercase; font-size:0.7rem; color:var(--ink-soft); }
+  .day-stream { font-size:0.78rem; display:flex; align-items:center; gap:0.35rem; }
+  .day-none { font-size:0.78rem; color:#A7A297; font-style:italic; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .dot-ile { background: var(--indigo); }
+  .dot-oja { background: var(--gold); }
+  .dot-koto { background: var(--camwood); }
+
+  @media (max-width: 800px) {
+    .ticket-layout { grid-template-columns:1fr; }
+    .week-grid { grid-template-columns:repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div id="site-header-mount"></div>
+
+<main>
+  <section class="hero" style="padding-bottom:1.5rem;">
+    <div class="container hero-inner">
+      <span class="eyebrow">Ìṣàjọ · Schedule Pickup</span>
+      <h1>Book a pickup, or report an issue</h1>
+      <p class="lede">Set up your weekly collection schedule, or file a report if something's gone wrong.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <div class="sp-tabs">
+        <div class="sp-tab active" data-sp="report">Report Issue</div>
+        <div class="sp-tab" data-sp="pickup">My Pickup Schedule</div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="sp-panel active" id="sp-report">
+        <div class="ticket-layout">
+          <form id="report-form">
+            <div class="field">
+              <span>Issue type</span>
+              <select id="issue-type" required>
+                <option value="" disabled selected>Select an issue</option>
+                <option value="Missed pickup">Missed pickup</option>
+                <option value="Overflowing refuse heap">Overflowing refuse heap</option>
+                <option value="Blocked drainage">Blocked drainage / gutter</option>
+                <option value="Illegal dumping">Illegal dumping</option>
+                <option value="Blocked access">Blocked access for waste truck</option>
+              </select>
+            </div>
+            <div class="field">
+              <span>Waste stream</span>
+              <select id="issue-stream" required>
+                <option value="" disabled selected>Select a stream</option>
+                <option value="Ilé">Ilé — household refuse</option>
+                <option value="Ọjà">Ọjà — market waste</option>
+                <option value="Kòtò">Kòtò — drainage / gutter</option>
+                <option value="Not applicable">Not applicable</option>
+              </select>
+            </div>
+            <div class="field">
+              <span>Location</span>
+              <input type="text" id="issue-location" placeholder="Street, market, or nearest landmark" required>
+            </div>
+            <div class="field">
+              <span>Description</span>
+              <textarea id="issue-desc" rows="4" placeholder="What's going on?" required></textarea>
+            </div>
+            <div class="field">
+              <span>Photo (optional)</span>
+              <input type="file" id="issue-photo" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit ticket</button>
+          </form>
+
+          <aside>
+            <span class="eyebrow">Ticket preview</span>
+            <div class="ticket-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                <span class="mono" id="ticket-id-preview">— — — —</span>
+                <span class="status-pill" id="ticket-status-preview">Not submitted</span>
+              </div>
+              <div class="ticket-details">
+                <div><span>Type</span><span id="pv-type">—</span></div>
+                <div><span>Stream</span><span id="pv-stream">—</span></div>
+                <div><span>Location</span><span id="pv-location">—</span></div>
+              </div>
+            </div>
+            <p style="font-size:0.78rem; color:var(--ink-soft); margin-top:0.8rem;">This is a session-only prototype — submitted tickets reset on reload.</p>
+          </aside>
+        </div>
+      </div>
+
+      <!-- PICKUP -->
+      <div class="sp-panel" id="sp-pickup">
+        <div class="field" style="max-width:280px; margin-bottom:1.5rem;">
+          <span>Local Government</span>
+          <select id="zone-picker">
+            <option value="OGN">Ogbomosho North</option>
+            <option value="OGS">Ogbomosho South</option>
+            <option value="ORI">Oriire</option>
+            <option value="OGO">Ogo-Oluwa</option>
+            <option value="SUR">Surulere</option>
+          </select>
+        </div>
+        <div class="week-grid" id="week-grid"></div>
+        <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1rem;">Set your refuse out by 7:00 AM on collection days. Missed a pickup? File a report and crews will follow up within 24 hours.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer-mount"></div>
+
+<script src="auth.js"></script>
+<script src="components.js"></script>
+<script>
+  // Auth guard — must be logged in to access this page
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.protectPage()) return; // redirects if not logged in
+  });
+  // Sub-tab switching
+  document.querySelectorAll('.sp-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.sp-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('sp-' + tab.dataset.sp).classList.add('active');
+    });
+  });
+
+  // Report form preview + submission
+  const form = document.getElementById('report-form');
+  const pvType = document.getElementById('pv-type');
+  const pvStream = document.getElementById('pv-stream');
+  const pvLocation = document.getElementById('pv-location');
+
+  function syncPreview() {
+    pvType.textContent = document.getElementById('issue-type').value || '—';
+    pvStream.textContent = document.getElementById('issue-stream').value || '—';
+    pvLocation.textContent = document.getElementById('issue-location').value || '—';
+  }
+  ['issue-type', 'issue-stream', 'issue-location'].forEach(id => {
+    document.getElementById(id).addEventListener('input', syncPreview);
+    document.getElementById(id).addEventListener('change', syncPreview);
+  });
+
+  let ticketCounter = 4820;
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    ticketCounter += 1;
+    document.getElementById('ticket-id-preview').textContent = `OGB-${ticketCounter}`;
+    const pill = document.getElementById('ticket-status-preview');
+    pill.textContent = 'Submitted';
+    pill.style.background = '#EEF1F7';
+    pill.style.color = 'var(--indigo)';
+    form.reset();
+    syncPreview();
+  });
+
+  // Weekly pickup schedule
+  const STREAM_INFO = { 'Ilé': 'dot-ile', 'Ọjà': 'dot-oja', 'Kòtò': 'dot-koto' };
+  const ZONE_SCHEDULES = {
+    OGN: { Mon: ['Ilé'], Tue: [], Wed: ['Ọjà'], Thu: [], Fri: ['Kòtò'], Sat: [], Sun: [] },
+    OGS: { Mon: [], Tue: ['Ilé', 'Ọjà'], Wed: [], Thu: ['Kòtò'], Fri: [], Sat: [], Sun: [] },
+    ORI: { Mon: ['Ọjà'], Tue: [], Wed: ['Ilé'], Thu: [], Fri: ['Kòtò'], Sat: [], Sun: [] },
+    OGO: { Mon: [], Tue: ['Kòtò'], Wed: ['Ilé'], Thu: [], Fri: ['Ọjà'], Sat: [], Sun: [] },
+    SUR: { Mon: ['Ilé'], Tue: [], Wed: ['Kòtò'], Thu: ['Ọjà'], Fri: [], Sat: [], Sun: [] }
+  };
+  const DAY_ORDER = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function renderWeek() {
+    const zone = document.getElementById('zone-picker').value;
+    const schedule = ZONE_SCHEDULES[zone];
+    const todayIndex = new Date().getDay();
+    const grid = document.getElementById('week-grid');
+    grid.innerHTML = '';
+    DAY_ORDER.forEach((day, i) => {
+      const streams = schedule[day];
+      const card = document.createElement('div');
+      card.className = 'day-card' + (i === todayIndex ? ' is-today' : '');
+      let html = '<span class="day-none">No pickup</span>';
+      if (streams.length) {
+        html = streams.map(s => `<span class="day-stream"><span class="dot ${STREAM_INFO[s]}"></span>${s}</span>`).join('');
+      }
+      card.innerHTML = `<span class="day-name">${day}</span><div style="display:flex; flex-direction:column; gap:0.4rem;">${html}</div>`;
+      grid.appendChild(card);
+    });
+  }
+  document.getElementById('zone-picker').addEventListener('change', renderWeek);
+  renderWeek();
+</script>
+</body>
+</html>

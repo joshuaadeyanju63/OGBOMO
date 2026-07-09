@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users — Ogbomọ́ Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="sidebar"></aside>
+  <div class="admin-topbar">
+    <span class="topbar-page-title">Users</span>
+    <div class="topbar-right">
+      <span class="topbar-lga-badge">All LGAs</span>
+      <span class="topbar-time mono" id="topbar-time"></span>
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <div class="kpi-grid" id="user-kpis"></div>
+
+    <div class="admin-panel" style="margin-top:1.25rem;">
+      <div class="panel-header">
+        <span class="panel-title">Registered Users</span>
+        <div style="display:flex;gap:0.6rem;">
+          <input class="admin-input" id="user-search" placeholder="Search name or email…" style="width:200px;">
+          <select class="admin-select" id="user-lga-filter">
+            <option value="">All LGAs</option>
+            <option>Ogbomosho North</option>
+            <option>Ogbomosho South</option>
+            <option>Oriire</option>
+            <option>Ogo-Oluwa</option>
+            <option>Surulere</option>
+          </select>
+          <select class="admin-select" id="user-role-filter">
+            <option value="">All roles</option>
+            <option value="resident">Resident</option>
+            <option value="collector">Collector</option>
+          </select>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>LGA</th><th>Role</th><th>Joined</th><th>Reports</th><th>Points</th><th>Status</th></tr></thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+      <div style="padding:0.8rem 1.2rem;font-size:0.78rem;color:var(--ink-soft);border-top:1px solid var(--line);">
+        Showing <span id="user-count">0</span> users
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="admin-auth.js"></script>
+<script>
+AdminAuth.protectAdminPage('super_admin');
+document.getElementById('sidebar').innerHTML = buildSidebar('users');
+AdminAuth.renderSidebarUser();
+AdminAuth.markActiveSidebarLink();
+document.getElementById('sidebar-logout-btn').addEventListener('click', AdminAuth.logout);
+function tick(){ document.getElementById('topbar-time').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+tick(); setInterval(tick,1000);
+
+const USERS = [
+  { name:'Taiwo Adesanya',  email:'t.adesanya@email.com',  lga:'Ogbomosho North', role:'resident',  joined:'Jul 1',  reports:3,  points:1950, active:true },
+  { name:'Bisi Olawale',    email:'b.olawale@email.com',   lga:'Ogbomosho South', role:'resident',  joined:'Jul 2',  reports:2,  points:1720, active:true },
+  { name:'Sade Kareem',     email:'s.kareem@email.com',    lga:'Oriire',          role:'resident',  joined:'Jun 28', reports:1,  points:2840, active:true },
+  { name:'Emeka Balogun',   email:'e.balogun@email.com',   lga:'Ogbomosho North', role:'collector', joined:'Jun 25', reports:0,  points:2210, active:true },
+  { name:'Funmi Taiwo',     email:'f.taiwo@email.com',     lga:'Ogo-Oluwa',       role:'resident',  joined:'Jul 3',  reports:2,  points:1380, active:true },
+  { name:'Ade Williams',    email:'a.williams@email.com',  lga:'Surulere',        role:'resident',  joined:'Jul 4',  reports:1,  points:640,  active:true },
+  { name:'Yemi Okafor',     email:'y.okafor@email.com',    lga:'Ogbomosho South', role:'collector', joined:'Jun 20', reports:0,  points:480,  active:false },
+  { name:'Kemi Adeyemi',    email:'k.adeyemi@email.com',   lga:'Ogbomosho North', role:'resident',  joined:'Jul 5',  reports:4,  points:310,  active:true },
+];
+
+document.getElementById('user-kpis').innerHTML = `
+  <div class="kpi-card kpi-accent"><span class="kpi-label">Total Users</span><span class="kpi-value">${USERS.length}</span><span class="kpi-change kpi-up">↑ 3 this week</span></div>
+  <div class="kpi-card kpi-accent-green"><span class="kpi-label">Active</span><span class="kpi-value">${USERS.filter(u=>u.active).length}</span></div>
+  <div class="kpi-card kpi-accent-gold"><span class="kpi-label">Collectors</span><span class="kpi-value">${USERS.filter(u=>u.role==='collector').length}</span></div>
+  <div class="kpi-card kpi-accent-red"><span class="kpi-label">Inactive</span><span class="kpi-value">${USERS.filter(u=>!u.active).length}</span></div>`;
+
+function renderUsers() {
+  const search = document.getElementById('user-search').value.toLowerCase();
+  const lgaF = document.getElementById('user-lga-filter').value;
+  const roleF = document.getElementById('user-role-filter').value;
+  const filtered = USERS.filter(u => {
+    const ms = !search || u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+    const ml = !lgaF || u.lga === lgaF;
+    const mr = !roleF || u.role === roleF;
+    return ms && ml && mr;
+  });
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '';
+  document.getElementById('user-count').textContent = filtered.length;
+  filtered.forEach(u => {
+    tbody.innerHTML += `<tr>
+      <td style="font-weight:600;">${u.name}</td>
+      <td style="color:var(--ink-soft);font-size:0.8rem;">${u.email}</td>
+      <td style="font-size:0.8rem;">${u.lga}</td>
+      <td><span class="badge ${u.role==='collector'?'badge-progress':'badge-review'}">${u.role}</span></td>
+      <td style="color:var(--ink-soft);font-size:0.8rem;">${u.joined}</td>
+      <td class="mono">${u.reports}</td>
+      <td class="mono" style="color:var(--gold);font-weight:700;">${u.points.toLocaleString()}</td>
+      <td><span class="badge ${u.active?'badge-resolved':'badge-open'}">${u.active?'Active':'Inactive'}</span></td>
+    </tr>`;
+  });
+}
+
+['user-search','user-lga-filter','user-role-filter'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderUsers);
+  document.getElementById(id).addEventListener('change', renderUsers);
+});
+renderUsers();
+
+function buildSidebar(active) {
+  return `<div class="sidebar-brand"><div class="sidebar-brand-name">OGBOMỌ́</div><div class="sidebar-brand-sub">Admin Portal</div></div>
+  <div id="sidebar-role-badge" class="sidebar-role-badge"><span class="sidebar-role-dot"></span><span id="sidebar-role-label">Super Admin</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Overview</div>
+    <a href="admin-dashboard.html" class="sidebar-link"><span class="icon">◼</span>Dashboard</a>
+    <div class="sidebar-section-label">Operations</div>
+    <a href="admin-reports.html" class="sidebar-link"><span class="icon">🎫</span>Reports<span class="notif-dot"></span></a>
+    <a href="admin-routes.html" class="sidebar-link"><span class="icon">🚛</span>Routes & Crews</a>
+    <div class="sidebar-section-label">Finance</div>
+    <a href="admin-wallet.html" class="sidebar-link"><span class="icon">💰</span>CleanPoints & Wallet</a>
+    <div class="sidebar-section-label">Platform</div>
+    <a href="admin-users.html" class="sidebar-link ${active==='users'?'active':''}"><span class="icon">👥</span>Users</a>
+    <div class="sidebar-section-label">Account</div>
+    <a href="index.html" class="sidebar-link"><span class="icon">↗</span>Public Site</a>
+  </nav>
+  <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-avatar" id="sidebar-avatar">KN</div><div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-user-name">Loading…</div><div class="sidebar-user-role" id="sidebar-user-role"></div></div></div><button class="sidebar-logout" id="sidebar-logout-btn">Sign out</button></div>`;
+}
+</script>
+</body>
+</html>

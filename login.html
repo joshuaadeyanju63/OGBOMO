@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In — Ogbomọ́</title>
+<meta name="description" content="Log in to your Ogbomọ́ account.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+</head>
+<body style="background:var(--paper-tint);">
+
+<div style="min-height:100vh; display:grid; grid-template-columns:1fr 1fr;">
+
+  <!-- LEFT: Brand panel -->
+  <div class="auth-brand">
+    <div class="auth-brand-top">
+      <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:3rem;">
+        <span class="brand-dots"><span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span></span>
+        <span style="font-family:'Unbounded',sans-serif; font-weight:700; color:#fff;">OGBOMỌ́</span>
+      </div>
+      <div class="auth-brand-tagline">
+        <h2>Welcome back to Ogbomosoland's waste platform</h2>
+        <p>Log in to schedule pickups, check your CleanPoints balance, report issues, and track your impact.</p>
+      </div>
+    </div>
+    <div class="auth-brand-bottom">
+      <p style="font-size:0.82rem; color:rgba(255,255,255,0.5); line-height:1.6;">Ogbomọ́ is a prototype platform for Ogbomosoland. It is not affiliated with the Soun's palace or any local government.</p>
+    </div>
+  </div>
+
+  <!-- RIGHT: Form panel -->
+  <div class="auth-form-panel">
+    <div class="auth-form-header">
+      <a href="index.html" style="font-size:0.85rem; color:var(--ink-soft); display:inline-flex; align-items:center; gap:0.4rem; margin-bottom:1.5rem;">← Back to home</a>
+      <span class="eyebrow">Ìwọlé · Welcome back</span>
+      <h1>Log in</h1>
+      <p>Don't have an account? <a href="signup.html" style="color:var(--indigo); font-weight:600;">Sign up free</a></p>
+    </div>
+
+    <!-- Error banner (hidden initially) -->
+    <div id="login-error" style="display:none; background:#FEF2EE; border:1px solid #F4C7BA; border-radius:var(--radius-sm); padding:0.85rem 1rem; font-size:0.88rem; color:var(--camwood); margin-bottom:1.2rem;">
+      Incorrect email or password. Please try again or <a href="forgot-password.html" style="color:var(--camwood); font-weight:600; text-decoration:underline;">reset your password</a>.
+    </div>
+
+    <form id="login-form" novalidate>
+      <div class="auth-field" id="field-email">
+        <label for="email">Email address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        <span class="error-msg">Enter a valid email address</span>
+      </div>
+
+      <div class="auth-field" id="field-password">
+        <label for="password">
+          <span style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Password</span>
+            <a href="forgot-password.html" style="color:var(--indigo); font-weight:600; font-size:0.82rem; text-transform:none; letter-spacing:0;">Forgot password?</a>
+          </span>
+        </label>
+        <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
+        <span class="error-msg">Enter your password</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.88rem; color:var(--ink-soft); margin-bottom:1.4rem;">
+        <input type="checkbox" id="remember" style="accent-color:var(--indigo);">
+        <label for="remember">Remember me for 30 days</label>
+      </div>
+
+      <button type="submit" class="auth-submit" id="login-btn">Log in</button>
+    </form>
+
+    <div class="auth-success" id="auth-success">
+      <div style="font-size:2.5rem; margin-bottom:0.8rem;">✓</div>
+      <h2>Logged in!</h2>
+      <p>Welcome back. In a live deployment, you'd be redirected to your dashboard now. Explore the platform:</p>
+      <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:1rem;">
+        <a href="schedule-pickup.html" class="btn btn-primary" style="justify-content:center;">Schedule a Pickup</a>
+        <a href="wallet.html" class="btn btn-secondary" style="justify-content:center;">Check Wallet</a>
+      </div>
+    </div>
+
+    <p style="text-align:center; font-size:0.88rem; color:var(--ink-soft); margin-top:1rem;">
+      Don't have an account? <a href="signup.html" style="color:var(--indigo); font-weight:600;">Sign up free</a>
+    </p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+Auth.redirectIfLoggedIn();
+
+function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+function setErr(id, show) {
+  const f = document.getElementById('field-' + id);
+  if (f) f.classList.toggle('has-error', show);
+}
+
+['email','password'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => {
+    const f = document.getElementById('field-' + id);
+    if (f) f.classList.remove('has-error');
+    document.getElementById('login-error').style.display = 'none';
+  });
+});
+
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const em = document.getElementById('email').value.trim();
+  const pw = document.getElementById('password').value;
+  let ok = true;
+  setErr('email', !isEmail(em)); if(!isEmail(em)) ok=false;
+  setErr('password', !pw); if(!pw) ok=false;
+  if (!ok) return;
+
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'Logging in…'; btn.disabled = true;
+
+  setTimeout(() => {
+    Auth.login(em); // sets session then redirects to ?redirect= or home
+  }, 800);
+});
+</script>
+</body>
+</html>

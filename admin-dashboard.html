@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Ogbomọ́ Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="sidebar"></aside>
+
+  <div class="admin-topbar">
+    <span class="topbar-page-title">Dashboard</span>
+    <div class="topbar-right">
+      <span class="topbar-lga-badge" id="topbar-lga">All LGAs</span>
+      <span class="topbar-time mono" id="topbar-time"></span>
+    </div>
+  </div>
+
+  <main class="admin-main">
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="admin-grid-2">
+      <!-- Recent reports -->
+      <div class="admin-panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Reports</span>
+          <a href="admin-reports.html" class="btn-admin btn-ghost-admin">View all</a>
+        </div>
+        <table class="data-table" id="recent-reports-table">
+          <thead><tr><th>Ticket</th><th>Type</th><th>Location</th><th>Status</th></tr></thead>
+          <tbody id="recent-reports-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Route status -->
+      <div class="admin-panel">
+        <div class="panel-header">
+          <span class="panel-title">Today's Routes</span>
+          <a href="admin-routes.html" class="btn-admin btn-ghost-admin">Manage</a>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Route</th><th>Location</th><th>Stream</th><th>Status</th></tr></thead>
+          <tbody id="routes-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-grid-2">
+      <!-- LGA breakdown (super admin only) -->
+      <div class="admin-panel" id="lga-panel">
+        <div class="panel-header">
+          <span class="panel-title">Reports by LGA</span>
+        </div>
+        <div class="panel-body" id="lga-breakdown"></div>
+      </div>
+
+      <!-- Activity feed -->
+      <div class="admin-panel">
+        <div class="panel-header">
+          <span class="panel-title">Live Activity</span>
+        </div>
+        <div class="activity-feed" id="activity-feed"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="admin-auth.js"></script>
+<script>
+AdminAuth.protectAdminPage();
+
+// ── Sidebar ──────────────────────────────────────────────────────────────
+document.getElementById('sidebar').innerHTML = buildSidebar('dashboard');
+AdminAuth.renderSidebarUser();
+AdminAuth.markActiveSidebarLink();
+document.getElementById('sidebar-logout-btn').addEventListener('click', AdminAuth.logout);
+
+// ── Clock ────────────────────────────────────────────────────────────────
+function tick() { document.getElementById('topbar-time').textContent = new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+tick(); setInterval(tick, 1000);
+
+// ── LGA badge ────────────────────────────────────────────────────────────
+const lga = AdminAuth.getAssignedLGA();
+document.getElementById('topbar-lga').textContent = lga || 'All LGAs';
+
+// ── Data ─────────────────────────────────────────────────────────────────
+const isSuperAdmin = AdminAuth.isSuperAdmin();
+
+const ALL_REPORTS = [
+  { id:'OGB-4832', type:'Missed pickup',        location:'Wazo Market',      lga:'Ogbomosho North',  status:'open',     date:'Today, 07:14' },
+  { id:'OGB-4831', type:'Illegal dumping',       location:'Masifa Road',      lga:'Ogbomosho North',  status:'review',   date:'Today, 06:52' },
+  { id:'OGB-4830', type:'Overflowing heap',      location:'Aarada Market',    lga:'Ogbomosho South',  status:'open',     date:'Today, 06:30' },
+  { id:'OGB-4829', type:'Blocked drainage',      location:'Oke Elerin',       lga:'Ogbomosho North',  status:'resolved', date:'Yesterday' },
+  { id:'OGB-4828', type:'Missed pickup',         location:'Ikoyi-Ile Road',   lga:'Oriire',           status:'resolved', date:'Yesterday' },
+  { id:'OGB-4827', type:'Overflowing heap',      location:'Ajaawa',           lga:'Ogo-Oluwa',        status:'review',   date:'Jul 5' },
+];
+
+const ALL_ROUTES = [
+  { code:'RT-014', location:'Wazo Market',    stream:'Ọjà',  status:'collected' },
+  { code:'RT-021', location:'Ayanyan Market', stream:'Ọjà',  status:'collected' },
+  { code:'RT-008', location:'Masifa Road',    stream:'Kòtò', status:'progress' },
+  { code:'RT-033', location:'Oke Elerin',     stream:'Ilé',  status:'progress' },
+  { code:'RT-019', location:'Aarada Market',  stream:'Ọjà',  status:'pending' },
+  { code:'RT-011', location:'Oke Alapata',    stream:'Kòtò', status:'delayed' },
+];
+
+const LGA_DATA = [
+  { name:'Ogbomosho North',  open:3, resolved:12, total:15 },
+  { name:'Ogbomosho South',  open:2, resolved:8,  total:10 },
+  { name:'Oriire',           open:1, resolved:5,  total:6  },
+  { name:'Ogo-Oluwa',        open:2, resolved:3,  total:5  },
+  { name:'Surulere',         open:0, resolved:4,  total:4  },
+];
+
+const ACTIVITY = [
+  { color:'#3C8F63', msg:'RT-014 marked collected — Wazo Market',          time:'8 mins ago' },
+  { color:'#A6472D', msg:'New report OGB-4832 — Missed pickup, Wazo',      time:'12 mins ago' },
+  { color:'#1F2E52', msg:'RT-021 marked collected — Ayanyan Market',       time:'19 mins ago' },
+  { color:'#C79A3D', msg:'OGB-4831 moved to In Review by Council Officer', time:'34 mins ago' },
+  { color:'#3C8F63', msg:'OGB-4829 resolved — Blocked drainage, Oke Elerin',time:'1 hr ago' },
+  { color:'#1F2E52', msg:'New user registered — Ogbomosho North',          time:'2 hrs ago' },
+];
+
+// Filter by LGA for council officers
+const reports = isSuperAdmin ? ALL_REPORTS : ALL_REPORTS.filter(r => r.lga === lga);
+const routes  = isSuperAdmin ? ALL_ROUTES  : ALL_ROUTES.slice(0, 4);
+
+// ── KPIs ─────────────────────────────────────────────────────────────────
+const openCount     = reports.filter(r => r.status === 'open').length;
+const resolvedCount = reports.filter(r => r.status === 'resolved').length;
+const routesDone    = ALL_ROUTES.filter(r => r.status === 'collected').length;
+
+const kpis = isSuperAdmin ? [
+  { label:'Total Reports', value: ALL_REPORTS.length, change:'↑ 3 today', up:true,  accent:'kpi-accent' },
+  { label:'Open Tickets',  value: ALL_REPORTS.filter(r=>r.status==='open').length, change:'Needs action', up:false, accent:'kpi-accent-red' },
+  { label:'Routes Done',   value: routesDone + ' / ' + ALL_ROUTES.length, change:'Today', up:true, accent:'kpi-accent-green' },
+  { label:'CleanPoints Pending', value:'₦12,400', change:'Redemptions queued', up:false, accent:'kpi-accent-gold' },
+] : [
+  { label:'Your Reports',  value: reports.length, change: lga, up:true, accent:'kpi-accent' },
+  { label:'Open Tickets',  value: openCount, change:'Needs action', up:false, accent:'kpi-accent-red' },
+  { label:'Resolved',      value: resolvedCount, change:'This week', up:true, accent:'kpi-accent-green' },
+  { label:'Routes Today',  value: routesDone + ' / ' + ALL_ROUTES.length, change:'Collected', up:true, accent:'kpi-accent-gold' },
+];
+
+const kpiGrid = document.getElementById('kpi-grid');
+kpis.forEach(k => {
+  kpiGrid.innerHTML += `<div class="kpi-card ${k.accent}">
+    <span class="kpi-label">${k.label}</span>
+    <span class="kpi-value">${k.value}</span>
+    <span class="kpi-change ${k.up ? 'kpi-up' : 'kpi-down'}">${k.change}</span>
+  </div>`;
+});
+
+// ── Recent reports table ──────────────────────────────────────────────────
+const STATUS_BADGE = { open:'badge-open', review:'badge-review', resolved:'badge-resolved' };
+const STATUS_LABEL = { open:'Open', review:'In Review', resolved:'Resolved' };
+
+const tbody = document.getElementById('recent-reports-body');
+reports.slice(0, 5).forEach(r => {
+  tbody.innerHTML += `<tr>
+    <td class="mono" style="font-size:0.78rem;">${r.id}</td>
+    <td>${r.type}</td>
+    <td style="color:var(--ink-soft);">${r.location}</td>
+    <td><span class="badge ${STATUS_BADGE[r.status]}">${STATUS_LABEL[r.status]}</span></td>
+  </tr>`;
+});
+
+// ── Routes table ──────────────────────────────────────────────────────────
+const ROUTE_BADGE = { collected:'badge-collected', progress:'badge-progress', pending:'badge-pending', delayed:'badge-delayed' };
+const ROUTE_LABEL = { collected:'Collected', progress:'In Progress', pending:'Pending', delayed:'Delayed' };
+
+const rbody = document.getElementById('routes-body');
+routes.forEach(r => {
+  rbody.innerHTML += `<tr>
+    <td class="mono" style="font-size:0.78rem;">${r.code}</td>
+    <td>${r.location}</td>
+    <td>${r.stream}</td>
+    <td><span class="badge ${ROUTE_BADGE[r.status]}">${ROUTE_LABEL[r.status]}</span></td>
+  </tr>`;
+});
+
+// ── LGA breakdown (super admin) ───────────────────────────────────────────
+const lgaPanel = document.getElementById('lga-panel');
+if (!isSuperAdmin) { lgaPanel.style.display = 'none'; } else {
+  const el = document.getElementById('lga-breakdown');
+  LGA_DATA.forEach(l => {
+    const pct = Math.round((l.resolved / l.total) * 100);
+    el.innerHTML += `<div style="margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:0.35rem;">
+        <span>${l.name}</span>
+        <span class="mono" style="color:var(--ink-soft);">${l.resolved}/${l.total}</span>
+      </div>
+      <div class="mini-progress"><div class="mini-progress-fill" style="width:${pct}%;"></div></div>
+    </div>`;
+  });
+}
+
+// ── Activity feed ─────────────────────────────────────────────────────────
+const feed = document.getElementById('activity-feed');
+ACTIVITY.forEach(a => {
+  feed.innerHTML += `<div class="activity-item">
+    <div class="activity-dot" style="background:${a.color};"></div>
+    <div><div>${a.msg}</div><div class="activity-meta">${a.time}</div></div>
+  </div>`;
+});
+
+// ── Sidebar builder ───────────────────────────────────────────────────────
+function buildSidebar(active) {
+  const s = AdminAuth.isSuperAdmin();
+  return `
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-name">OGBOMỌ́</div>
+    <div class="sidebar-brand-sub">Admin Portal</div>
+  </div>
+  <div id="sidebar-role-badge" class="sidebar-role-badge ${s ? '' : 'council'}">
+    <span class="sidebar-role-dot"></span>
+    <span id="sidebar-role-label">${s ? 'Super Admin' : 'Council Officer'}</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Overview</div>
+    <a href="admin-dashboard.html" class="sidebar-link ${active==='dashboard'?'active':''}"><span class="icon">◼</span>Dashboard</a>
+    <div class="sidebar-section-label">Operations</div>
+    <a href="admin-reports.html" class="sidebar-link ${active==='reports'?'active':''}"><span class="icon">🎫</span>Reports<span class="notif-dot"></span></a>
+    <a href="admin-routes.html" class="sidebar-link ${active==='routes'?'active':''}"><span class="icon">🚛</span>Routes & Crews</a>
+    ${s ? `<div class="sidebar-section-label">Finance</div>
+    <a href="admin-wallet.html" class="sidebar-link ${active==='wallet'?'active':''}"><span class="icon">💰</span>CleanPoints & Wallet</a>
+    <div class="sidebar-section-label">Platform</div>
+    <a href="admin-users.html" class="sidebar-link ${active==='users'?'active':''}"><span class="icon">👥</span>Users</a>` : ''}
+    <div class="sidebar-section-label">Account</div>
+    <a href="index.html" class="sidebar-link"><span class="icon">↗</span>Public Site</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebar-avatar">KN</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-user-name">Loading…</div>
+        <div class="sidebar-user-role" id="sidebar-user-role"></div>
+      </div>
+    </div>
+    <button class="sidebar-logout" id="sidebar-logout-btn">Sign out</button>
+  </div>`;
+}
+</script>
+</body>
+</html>

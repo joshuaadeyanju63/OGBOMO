@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up — Ogbomọ́</title>
+<meta name="description" content="Create your Ogbomọ́ account to schedule pickups, earn CleanPoints, and help build a cleaner Ogbomosoland.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+</head>
+<body style="background:var(--paper-tint);">
+
+<div style="min-height:100vh; display:grid; grid-template-columns:1fr 1fr;">
+
+  <!-- LEFT: Brand panel -->
+  <div class="auth-brand">
+    <div class="auth-brand-top">
+      <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:3rem;">
+        <span class="brand-dots"><span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span></span>
+        <span style="font-family:'Unbounded',sans-serif; font-weight:700; color:#fff;">OGBOMỌ́</span>
+      </div>
+      <div class="auth-brand-tagline">
+        <h2>Turn your waste into opportunity</h2>
+        <p>Join Ogbomosoland's circular economy platform — schedule pickups, sort recyclables, earn CleanPoints, and help build a cleaner city.</p>
+      </div>
+    </div>
+    <div class="auth-brand-bottom">
+      <div class="auth-brand-stats">
+        <div class="auth-brand-stat"><span>745K</span><span>Residents across Ogbomosoland</span></div>
+        <div class="auth-brand-stat"><span>5 LGAs</span><span>One shared collection platform</span></div>
+        <div class="auth-brand-stat"><span>&gt;50%</span><span>Of household waste is organic</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Form panel -->
+  <div class="auth-form-panel">
+    <div class="auth-form-header">
+      <a href="index.html" style="font-size:0.85rem; color:var(--ink-soft); display:inline-flex; align-items:center; gap:0.4rem; margin-bottom:1.5rem;">← Back to home</a>
+      <span class="eyebrow">Ìforúkọ Sile · Register</span>
+      <h1>Create your account</h1>
+      <p>Already have an account? <a href="login.html" style="color:var(--indigo); font-weight:600;">Log in</a></p>
+    </div>
+
+    <form id="signup-form" novalidate>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.9rem;">
+        <div class="auth-field" id="field-firstname">
+          <label for="firstname">First name</label>
+          <input type="text" id="firstname" placeholder="e.g. Kielam" autocomplete="given-name">
+          <span class="error-msg">Enter your first name</span>
+        </div>
+        <div class="auth-field" id="field-lastname">
+          <label for="lastname">Last name</label>
+          <input type="text" id="lastname" placeholder="e.g. Niedefechner" autocomplete="family-name">
+          <span class="error-msg">Enter your last name</span>
+        </div>
+      </div>
+      <div class="auth-field" id="field-email">
+        <label for="email">Email address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+        <span class="error-msg">Enter a valid email address</span>
+      </div>
+      <div class="auth-field" id="field-phone">
+        <label for="phone">Phone (optional)</label>
+        <input type="tel" id="phone" placeholder="+234 800 000 0000" autocomplete="tel">
+      </div>
+      <div class="auth-field" id="field-lga">
+        <label for="lga">Local Government Area</label>
+        <select id="lga">
+          <option value="" disabled selected>Select your LGA</option>
+          <option>Ogbomosho North</option>
+          <option>Ogbomosho South</option>
+          <option>Oriire</option>
+          <option>Ogo-Oluwa</option>
+          <option>Surulere</option>
+        </select>
+        <span class="error-msg">Select your local government</span>
+      </div>
+      <div class="auth-field" id="field-password">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password">
+        <div style="height:4px; border-radius:999px; background:var(--line); overflow:hidden; margin-top:0.4rem;">
+          <div id="pw-fill" style="height:100%; width:0%; transition:width 0.2s ease, background 0.2s ease;"></div>
+        </div>
+        <span id="pw-label" style="font-size:0.75rem; color:var(--ink-soft); margin-top:0.3rem; display:block;">Enter a password</span>
+        <span class="error-msg">Password must be at least 8 characters</span>
+      </div>
+      <div class="auth-field" id="field-confirm">
+        <label for="confirm">Confirm password</label>
+        <input type="password" id="confirm" placeholder="Repeat your password" autocomplete="new-password">
+        <span class="error-msg">Passwords do not match</span>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:0.6rem; font-size:0.85rem; color:var(--ink-soft); margin-bottom:1.2rem;">
+        <input type="checkbox" id="terms" style="margin-top:2px; accent-color:var(--indigo); flex-shrink:0;">
+        <label for="terms">I agree to the <a href="#" style="color:var(--indigo); font-weight:600;">Terms of Service</a> and <a href="#" style="color:var(--indigo); font-weight:600;">Privacy Policy</a>. I understand Ogbomọ́ is a prototype, not an official government service.</label>
+      </div>
+      <button type="submit" class="auth-submit" id="submit-btn">Create account</button>
+    </form>
+
+    <div class="auth-success" id="auth-success">
+      <div style="font-size:2.5rem; margin-bottom:0.8rem;">✓</div>
+      <h2>Account created!</h2>
+      <p>Welcome to Ogbomọ́. This is a prototype — in a live deployment, you'd receive a verification email now. <a href="login.html" style="color:var(--indigo); font-weight:600;">Go to login →</a></p>
+    </div>
+
+    <p style="text-align:center; font-size:0.88rem; color:var(--ink-soft); margin-top:1rem;">
+      Already have an account? <a href="login.html" style="color:var(--indigo); font-weight:600;">Log in</a>
+    </p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+Auth.redirectIfLoggedIn(); // skip signup if already authenticated
+
+const STRENGTH = [
+  { label: 'Too short',  color: '#A6472D', pct: '12%' },
+  { label: 'Weak',       color: '#C79A3D', pct: '32%' },
+  { label: 'Fair',       color: '#C79A3D', pct: '56%' },
+  { label: 'Good',       color: '#3C8F63', pct: '78%' },
+  { label: 'Strong',     color: '#1F2E52', pct: '100%' },
+];
+document.getElementById('password').addEventListener('input', function() {
+  const v = this.value, fill = document.getElementById('pw-fill'), label = document.getElementById('pw-label');
+  if (!v) { fill.style.width='0%'; label.textContent='Enter a password'; label.style.color='var(--ink-soft)'; return; }
+  let s = v.length < 8 ? 0 : 1;
+  if (/[A-Z]/.test(v)) s++; if (/[0-9]/.test(v)) s++; if (/[^A-Za-z0-9]/.test(v)) s++;
+  const lvl = STRENGTH[Math.min(s, 4)];
+  fill.style.width = lvl.pct; fill.style.background = lvl.color;
+  label.textContent = lvl.label; label.style.color = lvl.color;
+});
+
+function setErr(id, show) {
+  const f = document.getElementById('field-' + id);
+  if (f) f.classList.toggle('has-error', show);
+}
+function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+['firstname','lastname','email','lga','password','confirm'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { const f = document.getElementById('field-' + id); if(f) f.classList.remove('has-error'); });
+  if (el && el.tagName === 'SELECT') el.addEventListener('change', () => { const f = document.getElementById('field-' + id); if(f) f.classList.remove('has-error'); });
+});
+
+document.getElementById('signup-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const fn = document.getElementById('firstname').value.trim();
+  const ln = document.getElementById('lastname').value.trim();
+  const em = document.getElementById('email').value.trim();
+  const lg = document.getElementById('lga').value;
+  const pw = document.getElementById('password').value;
+  const cf = document.getElementById('confirm').value;
+  const tc = document.getElementById('terms').checked;
+  let ok = true;
+  setErr('firstname', !fn); if(!fn) ok=false;
+  setErr('lastname', !ln); if(!ln) ok=false;
+  setErr('email', !isEmail(em)); if(!isEmail(em)) ok=false;
+  setErr('lga', !lg); if(!lg) ok=false;
+  setErr('password', pw.length < 8); if(pw.length < 8) ok=false;
+  setErr('confirm', !cf || pw !== cf); if(!cf || pw!==cf) ok=false;
+  if (!tc) { alert('Please agree to the terms to continue.'); ok=false; }
+  if (!ok) return;
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+  setTimeout(() => {
+    Auth.signup(fn, ln, em, lg); // sets session then redirects
+  }, 900);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — Ogbomọ́</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+<style>
+  body { background: #111827; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .login-wrap { width:100%; max-width:440px; padding:1.5rem; }
+  .login-brand { text-align:center; margin-bottom:2rem; }
+  .login-brand-name { font-family:'Unbounded',sans-serif; font-size:1.4rem; font-weight:700; color:#fff; }
+  .login-brand-sub { font-family:'Space Mono',monospace; font-size:0.7rem; color:#C79A3D; text-transform:uppercase; letter-spacing:0.08em; margin-top:0.3rem; }
+  .login-card { background:#1F2937; border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:2rem; }
+  .login-card h2 { color:#fff; font-size:1.15rem; margin-bottom:0.4rem; }
+  .login-card p { color:#9CA3AF; font-size:0.85rem; margin-bottom:1.5rem; }
+  .login-field { margin-bottom:1rem; }
+  .login-field label { display:block; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#9CA3AF; margin-bottom:0.4rem; }
+  .login-field input { width:100%; padding:0.75rem 1rem; background:#111827; border:1.5px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-family:'Work Sans',sans-serif; font-size:0.95rem; transition:border-color 0.15s ease; }
+  .login-field input:focus { outline:none; border-color:#C79A3D; }
+  .login-field input.error { border-color:#EF4444; }
+  .login-error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:0.75rem 1rem; color:#FCA5A5; font-size:0.85rem; margin-bottom:1rem; display:none; }
+  .login-error.show { display:block; }
+  .login-btn { width:100%; padding:0.85rem; background:#C79A3D; color:#111827; border:none; border-radius:8px; font-family:'Work Sans',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer; transition:background 0.15s ease; margin-top:0.5rem; }
+  .login-btn:hover { background:#E0B454; }
+  .login-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .demo-creds { margin-top:1.5rem; padding:1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; }
+  .demo-creds h4 { font-family:'Space Mono',monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:#6B7280; margin:0 0 0.6rem; }
+  .demo-row { display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.8rem; cursor:pointer; }
+  .demo-row:last-child { border-bottom:none; }
+  .demo-row:hover { color:#fff; }
+  .demo-row .demo-email { color:#9CA3AF; font-family:'Space Mono',monospace; font-size:0.72rem; }
+  .demo-row .demo-role { font-family:'Space Mono',monospace; font-size:0.65rem; padding:0.15rem 0.45rem; border-radius:999px; }
+  .demo-row .role-super { background:rgba(199,154,61,0.15); color:#C79A3D; }
+  .demo-row .role-council { background:rgba(60,143,99,0.15); color:#5EC290; }
+  .back-link { text-align:center; margin-top:1.2rem; font-size:0.82rem; color:#6B7280; }
+  .back-link a { color:#9CA3AF; }
+  .back-link a:hover { color:#fff; }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-brand">
+    <div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.5rem;">
+      <span style="width:8px;height:8px;border-radius:50%;background:#1F2E52;display:inline-block;"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:#C79A3D;display:inline-block;"></span>
+      <span style="width:8px;height:8px;border-radius:50%;background:#A6472D;display:inline-block;"></span>
+    </div>
+    <div class="login-brand-name">OGBOMỌ́</div>
+    <div class="login-brand-sub">Admin Portal</div>
+  </div>
+
+  <div class="login-card">
+    <h2>Sign in to Admin</h2>
+    <p>This portal is restricted to authorised platform and council staff only.</p>
+
+    <div class="login-error" id="login-error"></div>
+
+    <form id="admin-login-form" novalidate>
+      <div class="login-field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" placeholder="admin@ogbomo.ng" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">Sign in to Admin</button>
+    </form>
+
+    <div class="demo-creds">
+      <h4>Demo credentials — click to fill</h4>
+      <div class="demo-row" data-email="admin@ogbomo.ng" data-pw="Admin@2026">
+        <span class="demo-email">admin@ogbomo.ng</span>
+        <span class="demo-role role-super">Super Admin</span>
+      </div>
+      <div class="demo-row" data-email="north@ogbomo.ng" data-pw="Council@2026">
+        <span class="demo-email">north@ogbomo.ng</span>
+        <span class="demo-role role-council">Council — North</span>
+      </div>
+      <div class="demo-row" data-email="south@ogbomo.ng" data-pw="Council@2026">
+        <span class="demo-email">south@ogbomo.ng</span>
+        <span class="demo-role role-council">Council — South</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="back-link">← <a href="index.html">Back to public site</a></div>
+</div>
+
+<script src="admin-auth.js"></script>
+<script>
+  // Redirect if already logged in
+  if (AdminAuth.isLoggedIn()) window.location.replace('admin-dashboard.html');
+
+  // Fill demo credentials on click
+  document.querySelectorAll('.demo-row').forEach(row => {
+    row.addEventListener('click', () => {
+      document.getElementById('email').value = row.dataset.email;
+      document.getElementById('password').value = row.dataset.pw;
+      document.getElementById('email').dispatchEvent(new Event('input'));
+    });
+  });
+
+  document.getElementById('admin-login-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const pw = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    errEl.classList.remove('show');
+    if (!email || !pw) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.add('show'); return; }
+
+    btn.textContent = 'Signing in…'; btn.disabled = true;
+
+    setTimeout(() => {
+      const result = AdminAuth.attemptLogin(email, pw);
+      if (result.success) {
+        window.location.replace('admin-dashboard.html');
+      } else {
+        errEl.textContent = result.error;
+        errEl.classList.add('show');
+        btn.textContent = 'Sign in to Admin';
+        btn.disabled = false;
+      }
+    }, 700);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — Ogbomọ́ Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+<style>
+  .filters { display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; }
+  .action-row { display:flex; gap:0.5rem; }
+  .status-select { font-family:'Space Mono',monospace; font-size:0.72rem; padding:0.3rem 0.6rem; border:1px solid var(--line); border-radius:6px; cursor:pointer; }
+  .status-select:focus { outline:none; border-color:var(--indigo); }
+  tr.highlighted td { background:var(--gold-soft); }
+</style>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="sidebar"></aside>
+
+  <div class="admin-topbar">
+    <span class="topbar-page-title">Reports</span>
+    <div class="topbar-right">
+      <span class="topbar-lga-badge" id="topbar-lga">All LGAs</span>
+      <span class="topbar-time mono" id="topbar-time"></span>
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <div class="admin-panel">
+      <div class="panel-header">
+        <span class="panel-title">All Resident Reports</span>
+        <div class="filters">
+          <input class="admin-input" id="search-input" placeholder="Search ticket, type, location…" style="width:220px;">
+          <select class="admin-select" id="filter-status">
+            <option value="">All statuses</option>
+            <option value="open">Open</option>
+            <option value="review">In Review</option>
+            <option value="resolved">Resolved</option>
+          </select>
+          <select class="admin-select" id="filter-lga">
+            <option value="">All LGAs</option>
+            <option>Ogbomosho North</option>
+            <option>Ogbomosho South</option>
+            <option>Oriire</option>
+            <option>Ogo-Oluwa</option>
+            <option>Surulere</option>
+          </select>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Type</th>
+            <th>Stream</th>
+            <th>Location</th>
+            <th>LGA</th>
+            <th>Filed</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reports-body"></tbody>
+      </table>
+      <div id="empty-state" class="empty-state" style="display:none;">No reports match your filters.</div>
+      <div style="padding:0.8rem 1.2rem; font-size:0.78rem; color:var(--ink-soft); border-top:1px solid var(--line);">
+        Showing <span id="count-label">0</span> reports
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="admin-auth.js"></script>
+<script>
+AdminAuth.protectAdminPage();
+document.getElementById('sidebar').innerHTML = buildSidebar('reports');
+AdminAuth.renderSidebarUser();
+AdminAuth.markActiveSidebarLink();
+document.getElementById('sidebar-logout-btn').addEventListener('click', AdminAuth.logout);
+function tick() { document.getElementById('topbar-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+tick(); setInterval(tick,1000);
+const lga = AdminAuth.getAssignedLGA();
+document.getElementById('topbar-lga').textContent = lga || 'All LGAs';
+if (!AdminAuth.isSuperAdmin()) {
+  document.getElementById('filter-lga').value = lga;
+  document.getElementById('filter-lga').disabled = true;
+}
+
+const REPORTS = [
+  { id:'OGB-4832', type:'Missed pickup',       stream:'Ilé',  location:'Wazo Market',      lga:'Ogbomosho North', filed:'Today, 07:14', status:'open'     },
+  { id:'OGB-4831', type:'Illegal dumping',      stream:'Ọjà',  location:'Masifa Road',      lga:'Ogbomosho North', filed:'Today, 06:52', status:'review'   },
+  { id:'OGB-4830', type:'Overflowing heap',     stream:'Ọjà',  location:'Aarada Market',    lga:'Ogbomosho South', filed:'Today, 06:30', status:'open'     },
+  { id:'OGB-4829', type:'Blocked drainage',     stream:'Kòtò', location:'Oke Elerin',       lga:'Ogbomosho North', filed:'Jul 6',        status:'resolved' },
+  { id:'OGB-4828', type:'Missed pickup',        stream:'Ilé',  location:'Ikoyi-Ile Road',   lga:'Oriire',          filed:'Jul 6',        status:'resolved' },
+  { id:'OGB-4827', type:'Overflowing heap',     stream:'Ọjà',  location:'Ajaawa',           lga:'Ogo-Oluwa',       filed:'Jul 5',        status:'review'   },
+  { id:'OGB-4826', type:'Illegal dumping',      stream:'Ilé',  location:'Molete',           lga:'Ogbomosho South', filed:'Jul 5',        status:'open'     },
+  { id:'OGB-4825', type:'Blocked access',       stream:'Kòtò', location:'Iresaadu',         lga:'Surulere',        filed:'Jul 4',        status:'resolved' },
+  { id:'OGB-4824', type:'Damaged bin',          stream:'Ilé',  location:'Oke Alapata',      lga:'Ogbomosho North', filed:'Jul 4',        status:'resolved' },
+  { id:'OGB-4823', type:'Missed pickup',        stream:'Ọjà',  location:'Ayanyan Market',   lga:'Ogbomosho North', filed:'Jul 3',        status:'resolved' },
+];
+
+const BADGE = { open:'badge-open', review:'badge-review', resolved:'badge-resolved' };
+const LABEL = { open:'Open', review:'In Review', resolved:'Resolved' };
+
+let reportData = AdminAuth.isSuperAdmin() ? REPORTS : REPORTS.filter(r => r.lga === lga);
+
+function renderTable() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const filterStatus = document.getElementById('filter-status').value;
+  const filterLGA = document.getElementById('filter-lga').value;
+  const tbody = document.getElementById('reports-body');
+  const emptyEl = document.getElementById('empty-state');
+
+  const filtered = reportData.filter(r => {
+    const matchSearch = !search || r.id.toLowerCase().includes(search) || r.type.toLowerCase().includes(search) || r.location.toLowerCase().includes(search);
+    const matchStatus = !filterStatus || r.status === filterStatus;
+    const matchLGA = !filterLGA || r.lga === filterLGA;
+    return matchSearch && matchStatus && matchLGA;
+  });
+
+  tbody.innerHTML = '';
+  emptyEl.style.display = filtered.length ? 'none' : 'block';
+  document.getElementById('count-label').textContent = filtered.length;
+
+  filtered.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + r.id;
+    tr.innerHTML = `
+      <td class="mono" style="font-size:0.75rem;">${r.id}</td>
+      <td style="font-weight:500;">${r.type}</td>
+      <td style="color:var(--ink-soft);">${r.stream}</td>
+      <td>${r.location}</td>
+      <td style="color:var(--ink-soft);font-size:0.8rem;">${r.lga}</td>
+      <td style="color:var(--ink-soft);font-size:0.8rem;">${r.filed}</td>
+      <td>
+        <select class="status-select" data-id="${r.id}" onchange="changeStatus(this)">
+          <option value="open" ${r.status==='open'?'selected':''}>Open</option>
+          <option value="review" ${r.status==='review'?'selected':''}>In Review</option>
+          <option value="resolved" ${r.status==='resolved'?'selected':''}>Resolved</option>
+        </select>
+      </td>
+      <td>
+        <div class="action-row">
+          <span class="badge ${BADGE[r.status]}" id="badge-${r.id}">${LABEL[r.status]}</span>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function changeStatus(sel) {
+  const id = sel.dataset.id;
+  const newStatus = sel.value;
+  const report = reportData.find(r => r.id === id);
+  if (report) {
+    report.status = newStatus;
+    const badge = document.getElementById('badge-' + id);
+    if (badge) { badge.className = 'badge ' + BADGE[newStatus]; badge.textContent = LABEL[newStatus]; }
+    const row = document.getElementById('row-' + id);
+    if (row) { row.classList.add('highlighted'); setTimeout(() => row.classList.remove('highlighted'), 1200); }
+  }
+}
+
+['search-input','filter-status','filter-lga'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderTable);
+  document.getElementById(id).addEventListener('change', renderTable);
+});
+renderTable();
+
+function buildSidebar(active) {
+  const s = AdminAuth.isSuperAdmin();
+  return `<div class="sidebar-brand"><div class="sidebar-brand-name">OGBOMỌ́</div><div class="sidebar-brand-sub">Admin Portal</div></div>
+  <div id="sidebar-role-badge" class="sidebar-role-badge ${s?'':'council'}"><span class="sidebar-role-dot"></span><span id="sidebar-role-label">${s?'Super Admin':'Council Officer'}</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Overview</div>
+    <a href="admin-dashboard.html" class="sidebar-link"><span class="icon">◼</span>Dashboard</a>
+    <div class="sidebar-section-label">Operations</div>
+    <a href="admin-reports.html" class="sidebar-link ${active==='reports'?'active':''}"><span class="icon">🎫</span>Reports<span class="notif-dot"></span></a>
+    <a href="admin-routes.html" class="sidebar-link ${active==='routes'?'active':''}"><span class="icon">🚛</span>Routes & Crews</a>
+    ${s?`<div class="sidebar-section-label">Finance</div><a href="admin-wallet.html" class="sidebar-link ${active==='wallet'?'active':''}"><span class="icon">💰</span>CleanPoints & Wallet</a>
+    <div class="sidebar-section-label">Platform</div><a href="admin-users.html" class="sidebar-link ${active==='users'?'active':''}"><span class="icon">👥</span>Users</a>`:''}
+    <div class="sidebar-section-label">Account</div>
+    <a href="index.html" class="sidebar-link"><span class="icon">↗</span>Public Site</a>
+  </nav>
+  <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-avatar" id="sidebar-avatar">KN</div><div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-user-name">Loading…</div><div class="sidebar-user-role" id="sidebar-user-role"></div></div></div><button class="sidebar-logout" id="sidebar-logout-btn">Sign out</button></div>`;
+}
+</script>
+</body>
+</html>
