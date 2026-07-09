@@ -641,10 +641,18 @@ section.tint { background: var(--paper-tint); }
 .auth-success p { color: var(--ink-soft); font-size: 0.92rem; }
 .auth-success.show { display: block; }
 
+/* Name row (first/last name side by side, stacks on mobile) */
+.auth-name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
 @media (max-width: 860px) {
   .auth-page { grid-template-columns: 1fr; }
   .auth-brand { display: none; }
   .auth-form-panel { padding: 2.5rem 1.5rem; max-width: 100%; }
+  .auth-name-row { grid-template-columns: 1fr; gap: 0; }
 }
 
 /* ---------- Auth nav state ---------- */
