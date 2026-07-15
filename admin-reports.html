@@ -6,6 +6,11 @@
 <title>Reports — Ogbomọ́ Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="admin.css">
 <style>
   .filters { display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; }
@@ -53,6 +58,7 @@
         <thead>
           <tr>
             <th>Ticket</th>
+            <th>Photo</th>
             <th>Type</th>
             <th>Stream</th>
             <th>Location</th>
@@ -73,6 +79,7 @@
 </div>
 
 <script src="admin-auth.js"></script>
+<script src="data-store.js"></script>
 <script>
 AdminAuth.protectAdminPage();
 document.getElementById('sidebar').innerHTML = buildSidebar('reports');
@@ -88,18 +95,35 @@ if (!AdminAuth.isSuperAdmin()) {
   document.getElementById('filter-lga').disabled = true;
 }
 
-const REPORTS = [
-  { id:'OGB-4832', type:'Missed pickup',       stream:'Ilé',  location:'Wazo Market',      lga:'Ogbomosho North', filed:'Today, 07:14', status:'open'     },
-  { id:'OGB-4831', type:'Illegal dumping',      stream:'Ọjà',  location:'Masifa Road',      lga:'Ogbomosho North', filed:'Today, 06:52', status:'review'   },
-  { id:'OGB-4830', type:'Overflowing heap',     stream:'Ọjà',  location:'Aarada Market',    lga:'Ogbomosho South', filed:'Today, 06:30', status:'open'     },
-  { id:'OGB-4829', type:'Blocked drainage',     stream:'Kòtò', location:'Oke Elerin',       lga:'Ogbomosho North', filed:'Jul 6',        status:'resolved' },
-  { id:'OGB-4828', type:'Missed pickup',        stream:'Ilé',  location:'Ikoyi-Ile Road',   lga:'Oriire',          filed:'Jul 6',        status:'resolved' },
-  { id:'OGB-4827', type:'Overflowing heap',     stream:'Ọjà',  location:'Ajaawa',           lga:'Ogo-Oluwa',       filed:'Jul 5',        status:'review'   },
-  { id:'OGB-4826', type:'Illegal dumping',      stream:'Ilé',  location:'Molete',           lga:'Ogbomosho South', filed:'Jul 5',        status:'open'     },
-  { id:'OGB-4825', type:'Blocked access',       stream:'Kòtò', location:'Iresaadu',         lga:'Surulere',        filed:'Jul 4',        status:'resolved' },
-  { id:'OGB-4824', type:'Damaged bin',          stream:'Ilé',  location:'Oke Alapata',      lga:'Ogbomosho North', filed:'Jul 4',        status:'resolved' },
-  { id:'OGB-4823', type:'Missed pickup',        stream:'Ọjà',  location:'Ayanyan Market',   lga:'Ogbomosho North', filed:'Jul 3',        status:'resolved' },
+// Demo seed data — shown alongside real reports so the table isn't empty
+// before any resident has actually filed something in this browser.
+const SEED_REPORTS = [
+  { id:'OGB-4832', type:'Missed pickup',       stream:'Ilé',  location:'Wazo Market',      lga:'Ogbomosho North', filed:'Today, 07:14', status:'open',     photoDataUrl:null },
+  { id:'OGB-4831', type:'Illegal dumping',      stream:'Ọjà',  location:'Masifa Road',      lga:'Ogbomosho North', filed:'Today, 06:52', status:'review',   photoDataUrl:null },
+  { id:'OGB-4830', type:'Overflowing heap',     stream:'Ọjà',  location:'Aarada Market',    lga:'Ogbomosho South', filed:'Today, 06:30', status:'open',     photoDataUrl:null },
+  { id:'OGB-4829', type:'Blocked drainage',     stream:'Kòtò', location:'Oke Elerin',       lga:'Ogbomosho North', filed:'Jul 6',        status:'resolved', photoDataUrl:null },
+  { id:'OGB-4828', type:'Missed pickup',        stream:'Ilé',  location:'Ikoyi-Ile Road',   lga:'Oriire',          filed:'Jul 6',        status:'resolved', photoDataUrl:null },
+  { id:'OGB-4827', type:'Overflowing heap',     stream:'Ọjà',  location:'Ajaawa',           lga:'Ogo-Oluwa',       filed:'Jul 5',        status:'review',   photoDataUrl:null },
+  { id:'OGB-4826', type:'Illegal dumping',      stream:'Ilé',  location:'Molete',           lga:'Ogbomosho South', filed:'Jul 5',        status:'open',     photoDataUrl:null },
+  { id:'OGB-4825', type:'Blocked access',       stream:'Kòtò', location:'Iresaadu',         lga:'Surulere',        filed:'Jul 4',        status:'resolved', photoDataUrl:null },
+  { id:'OGB-4824', type:'Damaged bin',          stream:'Ilé',  location:'Oke Alapata',      lga:'Ogbomosho North', filed:'Jul 4',        status:'resolved', photoDataUrl:null },
+  { id:'OGB-4823', type:'Missed pickup',        stream:'Ọjà',  location:'Ayanyan Market',   lga:'Ogbomosho North', filed:'Jul 3',        status:'resolved', photoDataUrl:null },
 ];
+
+// Real reports filed via the resident-facing Schedule Pickup page, persisted
+// in localStorage. Convert to the same display shape as the seed data above.
+const realReports = OgbomoStore.getAllReports().map(r => ({
+  id: r.id,
+  type: r.type,
+  stream: r.stream,
+  location: r.location,
+  lga: r.lga,
+  filed: new Date(r.filedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+  status: r.status,
+  photoDataUrl: r.photoDataUrl,
+}));
+
+const REPORTS = [...realReports, ...SEED_REPORTS];
 
 const BADGE = { open:'badge-open', review:'badge-review', resolved:'badge-resolved' };
 const LABEL = { open:'Open', review:'In Review', resolved:'Resolved' };
@@ -129,6 +153,9 @@ function renderTable() {
     tr.id = 'row-' + r.id;
     tr.innerHTML = `
       <td class="mono" style="font-size:0.75rem;">${r.id}</td>
+      <td>${r.photoDataUrl
+        ? `<img src="${r.photoDataUrl}" alt="Report photo" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="openLightbox('${r.photoDataUrl}')">`
+        : `<span style="color:var(--ink-soft);font-size:0.78rem;">—</span>`}</td>
       <td style="font-weight:500;">${r.type}</td>
       <td style="color:var(--ink-soft);">${r.stream}</td>
       <td>${r.location}</td>
@@ -150,12 +177,23 @@ function renderTable() {
   });
 }
 
+function openLightbox(src) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,0.85);z-index:999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
+  overlay.innerHTML = `<img src="${src}" style="max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">`;
+  overlay.addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
+}
+
 function changeStatus(sel) {
   const id = sel.dataset.id;
   const newStatus = sel.value;
   const report = reportData.find(r => r.id === id);
   if (report) {
     report.status = newStatus;
+    // Persist back to real storage if this is an actual filed report
+    // (seed demo rows aren't in the real store, so this call is a harmless no-op for them)
+    OgbomoStore.updateReportStatus(id, newStatus);
     const badge = document.getElementById('badge-' + id);
     if (badge) { badge.className = 'badge ' + BADGE[newStatus]; badge.textContent = LABEL[newStatus]; }
     const row = document.getElementById('row-' + id);
