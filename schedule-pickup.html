@@ -7,6 +7,11 @@
 <meta name="description" content="Book your weekly waste pickup by local government, or report a missed pickup, overflow, or illegal dumping.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="main.css">
 <style>
   .sp-tabs { display:flex; gap:0.5rem; margin-bottom:2rem; border-bottom:1px solid var(--line); }
@@ -39,6 +44,19 @@
   .dot-oja { background: var(--gold); }
   .dot-koto { background: var(--camwood); }
 
+  /* My Reports tab */
+  .report-card { border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; padding:1rem; display:flex; gap:1rem; margin-bottom:0.9rem; }
+  .report-photo { width:72px; height:72px; border-radius:var(--radius-sm); object-fit:cover; flex-shrink:0; background:var(--paper-tint); }
+  .report-photo-placeholder { width:72px; height:72px; border-radius:var(--radius-sm); background:var(--paper-tint); display:flex; align-items:center; justify-content:center; color:var(--ink-soft); font-size:0.7rem; text-align:center; flex-shrink:0; }
+  .report-body { flex:1; min-width:0; }
+  .report-top { display:flex; justify-content:space-between; align-items:flex-start; gap:0.6rem; margin-bottom:0.3rem; }
+  .report-id { font-family:'Space Mono', monospace; font-size:0.72rem; color:var(--ink-soft); }
+  .status-badge { font-family:'Space Mono', monospace; font-size:0.65rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; white-space:nowrap; }
+  .status-badge-open { background:#FBF0ED; color:var(--camwood); }
+  .status-badge-review { background:var(--gold-soft); color:#93690F; }
+  .status-badge-resolved { background:#EBF5F0; color:#3C8F63; }
+  .report-meta { font-size:0.78rem; color:var(--ink-soft); }
+
   @media (max-width: 800px) {
     .ticket-layout { grid-template-columns:1fr; }
     .week-grid { grid-template-columns:repeat(2, 1fr); }
@@ -62,6 +80,7 @@
     <div class="container">
       <div class="sp-tabs">
         <div class="sp-tab active" data-sp="report">Report Issue</div>
+        <div class="sp-tab" data-sp="myreports">My Reports</div>
         <div class="sp-tab" data-sp="pickup">My Pickup Schedule</div>
       </div>
 
@@ -118,9 +137,15 @@
                 <div><span>Location</span><span id="pv-location">—</span></div>
               </div>
             </div>
-            <p style="font-size:0.78rem; color:var(--ink-soft); margin-top:0.8rem;">This is a session-only prototype — submitted tickets reset on reload.</p>
+            <p style="font-size:0.78rem; color:var(--ink-soft); margin-top:0.8rem;">Submitted reports are saved to this browser and will show up under "My Reports," even after you reload.</p>
           </aside>
         </div>
+      </div>
+
+      <!-- MY REPORTS -->
+      <div class="sp-panel" id="sp-myreports">
+        <div id="my-reports-list"></div>
+        <p id="my-reports-empty" style="display:none; font-size:0.85rem; color:var(--ink-soft); text-align:center; padding:2rem;">You haven't filed any reports yet — submit one under "Report Issue" and it'll show up here.</p>
       </div>
 
       <!-- PICKUP -->
@@ -145,6 +170,7 @@
 <div id="site-footer-mount"></div>
 
 <script src="auth.js"></script>
+<script src="data-store.js"></script>
 <script src="components.js"></script>
 <script>
   // Auth guard — must be logged in to access this page
@@ -177,18 +203,80 @@
     document.getElementById(id).addEventListener('change', syncPreview);
   });
 
-  let ticketCounter = 4820;
-  form.addEventListener('submit', e => {
+  const LGA_BY_ZONE_CODE = { OGN:'Ogbomosho North', OGS:'Ogbomosho South', ORI:'Oriire', OGO:'Ogo-Oluwa', SUR:'Surulere' };
+
+  form.addEventListener('submit', async e => {
     e.preventDefault();
-    ticketCounter += 1;
-    document.getElementById('ticket-id-preview').textContent = `OGB-${ticketCounter}`;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    const user = Auth.getUser();
+    const photoInput = document.getElementById('issue-photo');
+    const photoFile = photoInput.files && photoInput.files[0] ? photoInput.files[0] : null;
+
+    const report = await OgbomoStore.createReport({
+      userEmail: user ? user.email : 'anonymous@ogbomo.ng',
+      userName: user ? user.name : 'Resident',
+      lga: user && user.lga ? user.lga : (LGA_BY_ZONE_CODE[document.getElementById('zone-picker')?.value] || 'Unspecified'),
+      type: document.getElementById('issue-type').value,
+      stream: document.getElementById('issue-stream').value,
+      location: document.getElementById('issue-location').value,
+      description: document.getElementById('issue-desc').value,
+      photoFile,
+    });
+
+    document.getElementById('ticket-id-preview').textContent = report.id;
     const pill = document.getElementById('ticket-status-preview');
     pill.textContent = 'Submitted';
     pill.style.background = '#EEF1F7';
     pill.style.color = 'var(--indigo)';
+
     form.reset();
     syncPreview();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit ticket';
+    renderMyReports();
   });
+
+  // ── My Reports ────────────────────────────────────────────────────────
+  const STATUS_LABEL = { open: 'Open', review: 'In Review', resolved: 'Resolved' };
+  const STATUS_CLASS = { open: 'status-badge-open', review: 'status-badge-review', resolved: 'status-badge-resolved' };
+
+  function renderMyReports() {
+    const user = Auth.getUser();
+    const email = user ? user.email : 'anonymous@ogbomo.ng';
+    const reports = OgbomoStore.getReportsByUser(email);
+    const list = document.getElementById('my-reports-list');
+    const empty = document.getElementById('my-reports-empty');
+
+    list.innerHTML = '';
+    empty.style.display = reports.length ? 'none' : 'block';
+
+    reports.forEach(r => {
+      const filedDate = new Date(r.filedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const photoHtml = r.photoDataUrl
+        ? `<img src="${r.photoDataUrl}" alt="Report photo" class="report-photo">`
+        : `<div class="report-photo-placeholder">No photo</div>`;
+
+      const card = document.createElement('div');
+      card.className = 'report-card';
+      card.innerHTML = `
+        ${photoHtml}
+        <div class="report-body">
+          <div class="report-top">
+            <div>
+              <div style="font-weight:600;">${r.type}</div>
+              <div class="report-id">${r.id}</div>
+            </div>
+            <span class="status-badge ${STATUS_CLASS[r.status]}">${STATUS_LABEL[r.status]}</span>
+          </div>
+          <div class="report-meta">${r.location} · ${r.stream} · Filed ${filedDate}</div>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+  renderMyReports();
 
   // Weekly pickup schedule
   const STREAM_INFO = { 'Ilé': 'dot-ile', 'Ọjà': 'dot-oja', 'Kòtò': 'dot-koto' };
