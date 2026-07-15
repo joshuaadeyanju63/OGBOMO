@@ -48,6 +48,8 @@
       <p>Already have an account? <a href="login.html" style="color:var(--indigo); font-weight:600;">Log in</a></p>
     </div>
 
+    <div id="signup-error" style="display:none; background:#FEF2EE; border:1px solid #F4C7BA; border-radius:var(--radius-sm); padding:0.85rem 1rem; font-size:0.88rem; color:var(--camwood); margin-bottom:1.2rem;"></div>
+
     <form id="signup-form" novalidate>
       <div class="auth-name-row">
         <div class="auth-field" id="field-firstname">
@@ -157,7 +159,9 @@ document.getElementById('signup-form').addEventListener('submit', function(e) {
   const pw = document.getElementById('password').value;
   const cf = document.getElementById('confirm').value;
   const tc = document.getElementById('terms').checked;
+  const errEl = document.getElementById('signup-error');
   let ok = true;
+  errEl.style.display = 'none';
   setErr('firstname', !fn); if(!fn) ok=false;
   setErr('lastname', !ln); if(!ln) ok=false;
   setErr('email', !isEmail(em)); if(!isEmail(em)) ok=false;
@@ -169,7 +173,13 @@ document.getElementById('signup-form').addEventListener('submit', function(e) {
   const btn = document.getElementById('submit-btn');
   btn.textContent = 'Creating account…'; btn.disabled = true;
   setTimeout(() => {
-    Auth.signup(fn, ln, em, lg); // sets session then redirects
+    const result = Auth.signup(fn, ln, em, lg, pw); // registers account, then redirects on success
+    if (!result.ok) {
+      errEl.textContent = result.error;
+      errEl.style.display = 'block';
+      btn.textContent = 'Create account';
+      btn.disabled = false;
+    }
   }, 900);
 });
 </script>
