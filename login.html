@@ -115,16 +115,25 @@ document.getElementById('login-form').addEventListener('submit', function(e) {
   e.preventDefault();
   const em = document.getElementById('email').value.trim();
   const pw = document.getElementById('password').value;
+  const errEl = document.getElementById('login-error');
   let ok = true;
   setErr('email', !isEmail(em)); if(!isEmail(em)) ok=false;
   setErr('password', !pw); if(!pw) ok=false;
+  errEl.style.display = 'none';
   if (!ok) return;
 
   const btn = document.getElementById('login-btn');
   btn.textContent = 'Logging in…'; btn.disabled = true;
 
   setTimeout(() => {
-    Auth.login(em); // sets session then redirects to ?redirect= or home
+    const result = Auth.login(em, pw); // checks against registered accounts
+    if (!result.ok) {
+      errEl.textContent = result.error;
+      errEl.style.display = 'block';
+      btn.textContent = 'Log in';
+      btn.disabled = false;
+    }
+    // On success, Auth.login() has already redirected the page.
   }, 800);
 });
 </script>
