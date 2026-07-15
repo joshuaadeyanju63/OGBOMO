@@ -6,6 +6,11 @@
 <title>Dashboard — Ogbomọ́ Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -73,6 +78,7 @@
 </div>
 
 <script src="admin-auth.js"></script>
+<script src="data-store.js"></script>
 <script>
 AdminAuth.protectAdminPage();
 
@@ -93,14 +99,24 @@ document.getElementById('topbar-lga').textContent = lga || 'All LGAs';
 // ── Data ─────────────────────────────────────────────────────────────────
 const isSuperAdmin = AdminAuth.isSuperAdmin();
 
-const ALL_REPORTS = [
+// Real reports filed via Schedule Pickup, persisted in localStorage
+const realReports = OgbomoStore.getAllReports().map(r => ({
+  id: r.id,
+  type: r.type,
+  location: r.location,
+  lga: r.lga,
+  status: r.status,
+  date: new Date(r.filedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+}));
+
+const ALL_REPORTS = [...realReports, ...[
   { id:'OGB-4832', type:'Missed pickup',        location:'Wazo Market',      lga:'Ogbomosho North',  status:'open',     date:'Today, 07:14' },
   { id:'OGB-4831', type:'Illegal dumping',       location:'Masifa Road',      lga:'Ogbomosho North',  status:'review',   date:'Today, 06:52' },
   { id:'OGB-4830', type:'Overflowing heap',      location:'Aarada Market',    lga:'Ogbomosho South',  status:'open',     date:'Today, 06:30' },
   { id:'OGB-4829', type:'Blocked drainage',      location:'Oke Elerin',       lga:'Ogbomosho North',  status:'resolved', date:'Yesterday' },
   { id:'OGB-4828', type:'Missed pickup',         location:'Ikoyi-Ile Road',   lga:'Oriire',           status:'resolved', date:'Yesterday' },
   { id:'OGB-4827', type:'Overflowing heap',      location:'Ajaawa',           lga:'Ogo-Oluwa',        status:'review',   date:'Jul 5' },
-];
+]];
 
 const ALL_ROUTES = [
   { code:'RT-014', location:'Wazo Market',    stream:'Ọjà',  status:'collected' },
