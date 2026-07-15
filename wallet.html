@@ -7,6 +7,11 @@
 <meta name="description" content="Track your CleanPoints balance, log recyclable drop-offs, and redeem points for cash.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="main.css">
 <style>
   .rewards-layout { display:grid; grid-template-columns:1fr 1.3fr; gap:1.5rem; align-items:start; }
@@ -87,7 +92,7 @@
           </form>
         </div>
       </div>
-      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">This is a session-only prototype — points and balances reset on reload. A funded pilot would tie this to real hub check-ins and an actual cash-out partner.</p>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">Your CleanPoints balance is saved to this browser and will still be here next time you visit. A funded pilot would tie this to real hub check-ins and an actual cash-out partner.</p>
     </div>
   </section>
 </main>
@@ -95,6 +100,7 @@
 <div id="site-footer-mount"></div>
 
 <script src="auth.js"></script>
+<script src="data-store.js"></script>
 <script src="components.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -102,9 +108,15 @@
   });
   const POINT_RATES = { plastic: 5, metal: 8, paper: 3 };
   const REDEMPTION_THRESHOLD = 1000;
-  let pointsBalance = 0;
+
+  function currentEmail() {
+    const user = Auth.getUser();
+    return user ? user.email : 'anonymous@ogbomo.ng';
+  }
 
   function renderBalance() {
+    const wallet = OgbomoStore.getWallet(currentEmail());
+    const pointsBalance = wallet.balance;
     document.getElementById('points-balance').textContent = pointsBalance.toLocaleString('en-US');
     const remaining = Math.max(REDEMPTION_THRESHOLD - pointsBalance, 0);
     document.getElementById('points-remaining').textContent = remaining.toLocaleString('en-US');
@@ -119,14 +131,16 @@
     const material = document.getElementById('dropoff-material').value;
     const kg = parseFloat(document.getElementById('dropoff-kg').value);
     if (!material || !kg || kg <= 0) return;
-    pointsBalance += Math.round(POINT_RATES[material] * kg);
+    const points = Math.round(POINT_RATES[material] * kg);
+    OgbomoStore.addPoints(currentEmail(), { material, kg, points });
     renderBalance();
     e.target.reset();
   });
 
   document.getElementById('redeem-btn').addEventListener('click', () => {
-    if (pointsBalance < REDEMPTION_THRESHOLD) return;
-    pointsBalance -= REDEMPTION_THRESHOLD;
+    const wallet = OgbomoStore.getWallet(currentEmail());
+    if (wallet.balance < REDEMPTION_THRESHOLD) return;
+    OgbomoStore.redeemPoints(currentEmail(), REDEMPTION_THRESHOLD);
     renderBalance();
     const btn = document.getElementById('redeem-btn');
     btn.textContent = 'Redeemed ✓ (demo only)';
