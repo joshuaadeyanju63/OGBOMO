@@ -1,0 +1,11 @@
+# Never commit real secrets
+.env
+.env.local
+.env.*.local
+
+# Vercel local dev artifacts
+.vercel
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
