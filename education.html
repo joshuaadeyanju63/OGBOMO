@@ -7,6 +7,11 @@
 <meta name="description" content="Learn the 3 Rs and a simple 4-bin sorting system for Ogbomosoland households, plus how sorted waste can earn income.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="main.css">
 <style>
   .bin-card { border-radius: var(--radius); padding: 1.4rem; color: #fff; display:flex; flex-direction:column; gap:0.5rem; }
@@ -16,6 +21,85 @@
   .bin-plastic { background: #2B6E7A; }
   .bin-paper { background: #8A6A3C; }
   .bin-metal { background: #5B5548; }
+
+  /* AI Sort Assistant */
+  .ai-sort-tool {
+    margin-top: 2rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper);
+    box-shadow: var(--shadow-card);
+    padding: 1.6rem;
+  }
+  .ai-sort-head h3 { margin: 0.3rem 0 0; }
+  .ai-sort-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+    margin-top: 1.4rem;
+  }
+  .ai-sort-drop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--line);
+    border-radius: var(--radius-sm);
+    min-height: 180px;
+    cursor: pointer;
+    padding: 1rem;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    transition: border-color 0.15s ease;
+    overflow: hidden;
+  }
+  .ai-sort-drop:hover { border-color: var(--indigo); }
+  .ai-sort-drop img { max-width: 100%; max-height: 220px; border-radius: var(--radius-sm); object-fit: cover; }
+  .ai-sort-result {
+    border-radius: var(--radius-sm);
+    background: var(--paper-tint);
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 180px;
+  }
+  .ai-result-card {
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem;
+    color: #fff;
+  }
+  .ai-result-card h4 { color: #fff; margin: 0 0 0.3rem; font-size: 1.05rem; }
+  .ai-result-card p { font-size: 0.85rem; opacity: 0.92; margin: 0.2rem 0 0; }
+  .ai-result-uncertain {
+    background: var(--gold-soft);
+    border: 1.5px solid var(--gold);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem;
+  }
+  .ai-result-uncertain h4 { color: #93690F; margin: 0 0 0.3rem; font-size: 1.05rem; }
+  .ai-result-uncertain p { font-size: 0.85rem; color: #6B4E1A; margin: 0.2rem 0 0; }
+  .ai-result-error {
+    background: #FBF0ED;
+    border: 1.5px solid var(--camwood);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem;
+    color: var(--camwood);
+    font-size: 0.88rem;
+  }
+  .ai-loading { display: flex; align-items: center; gap: 0.6rem; color: var(--ink-soft); font-size: 0.9rem; }
+  .ai-spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid var(--line);
+    border-top-color: var(--indigo);
+    border-radius: 50%;
+    animation: ai-spin 0.7s linear infinite;
+  }
+  @keyframes ai-spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 700px) {
+    .ai-sort-body { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -67,6 +151,31 @@
         <div class="bin-card bin-paper"><h3>Paper &amp; Cardboard</h3><p>Cartons, newspaper, packaging. Keep dry so it stays usable for recycling.</p></div>
         <div class="bin-card bin-metal"><h3>Glass &amp; Metal</h3><p>Cans, tins, scrap metal, glass bottles. Widely bought by local scrap dealers.</p></div>
       </div>
+
+      <!-- AI SORT ASSISTANT -->
+      <div class="ai-sort-tool">
+        <div class="ai-sort-head">
+          <span class="eyebrow">Not sure which bin?</span>
+          <h3>Snap a photo and let the sort assistant check</h3>
+          <p style="color:var(--ink-soft); font-size:0.88rem; margin-top:0.4rem;">Photograph one item at a time. If it isn't clear which bin it belongs in — or it's not one of the 4 categories at all — the assistant will say so plainly instead of guessing.</p>
+        </div>
+
+        <div class="ai-sort-body">
+          <div class="ai-sort-upload">
+            <input type="file" id="ai-photo-input" accept="image/*" capture="environment" hidden>
+            <label for="ai-photo-input" class="ai-sort-drop" id="ai-sort-drop">
+              <span id="ai-sort-drop-text">📷 Tap to take or upload a photo</span>
+              <img id="ai-sort-preview" style="display:none;" alt="Preview of uploaded item">
+            </label>
+            <button class="btn btn-primary" id="ai-classify-btn" disabled style="margin-top:1rem; width:100%;">Check this item</button>
+          </div>
+
+          <div class="ai-sort-result" id="ai-sort-result">
+            <p style="color:var(--ink-soft); font-size:0.88rem;">Your result will appear here.</p>
+          </div>
+        </div>
+        <p style="font-size:0.75rem; color:var(--ink-soft); margin-top:0.9rem;">AI-assisted, not certified — always use your own judgment for hazardous or unclear items.</p>
+      </div>
     </div>
   </section>
 
@@ -74,7 +183,7 @@
     <div class="container" style="max-width:760px;">
       <span class="eyebrow">Waste can pay</span>
       <h2 style="margin-bottom:1rem;">This isn't hypothetical</h2>
-      <p style="color:var(--ink-soft);">In Ibadan — two hours from Ogbomoso — PETsPoint Recycling Nigeria already pays residents for clean plastic bottles, and national platforms like Scrapays let households sell recyclables digitally at fair prices. Many Ogbomoso residents already sell scrap metal and bottles informally to local buyers; nothing like this is yet formalized inside Ogbomosoland itself, and connecting that demand to sorted household waste is part of what this platform can grow into.</p>
+      <p style="color:var(--ink-soft);">In Ibadan — an hour from Ogbomoso — PETsPoint Recycling Nigeria already pays residents for clean plastic bottles, and national platforms like Scrapays let households sell recyclables digitally at fair prices. Many Ogbomoso residents already sell scrap metal and bottles informally to local buyers; nothing like this is yet formalized inside Ogbomosoland itself, and connecting that demand to sorted household waste is part of what this platform can grow into.</p>
       <a href="wallet.html" class="btn btn-primary" style="margin-top:1.5rem;">See How CleanPoints Work</a>
     </div>
   </section>
@@ -83,6 +192,100 @@
 
 <div id="site-footer-mount"></div>
 
+<script src="auth.js"></script>
+<script src="data-store.js"></script>
 <script src="components.js"></script>
+<script>
+(function () {
+  const CATEGORY_META = {
+    organic: { label: 'Organic', color: '#4C6B3F', tip: 'Great for composting.' },
+    plastic: { label: 'Plastic', color: '#2B6E7A', tip: 'Rinse it and keep it dry — this is what earns CleanPoints.' },
+    paper:   { label: 'Paper & Cardboard', color: '#8A6A3C', tip: 'Keep it dry so it stays recyclable.' },
+    metal:   { label: 'Glass & Metal', color: '#5B5548', tip: 'Local scrap dealers buy this.' },
+  };
+
+  const input = document.getElementById('ai-photo-input');
+  const drop = document.getElementById('ai-sort-drop');
+  const dropText = document.getElementById('ai-sort-drop-text');
+  const preview = document.getElementById('ai-sort-preview');
+  const classifyBtn = document.getElementById('ai-classify-btn');
+  const resultBox = document.getElementById('ai-sort-result');
+
+  let selectedFile = null;
+
+  input.addEventListener('change', () => {
+    if (!input.files || !input.files[0]) return;
+    selectedFile = input.files[0];
+    const url = URL.createObjectURL(selectedFile);
+    preview.src = url;
+    preview.style.display = 'block';
+    dropText.style.display = 'none';
+    classifyBtn.disabled = false;
+    resultBox.innerHTML = '<p style="color:var(--ink-soft); font-size:0.88rem;">Ready — tap "Check this item."</p>';
+  });
+
+  classifyBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    classifyBtn.disabled = true;
+    classifyBtn.textContent = 'Checking…';
+    resultBox.innerHTML = `<div class="ai-loading"><span class="ai-spinner"></span> Looking at the photo…</div>`;
+
+    try {
+      // Reuse the same client-side compression used for report photos —
+      // keeps the upload small and fast, and consistent across the site.
+      const compressedDataUrl = await OgbomoStore.compressPhoto(selectedFile, 640, 0.7);
+
+      const response = await fetch('/api/classify-waste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUrl: compressedDataUrl }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        renderError(errData.error || 'Something went wrong. Please try again.');
+        return;
+      }
+
+      const result = await response.json();
+      renderResult(result);
+    } catch (err) {
+      console.error('Classification request failed:', err);
+      renderError('Could not reach the sort assistant. Check your connection and try again.');
+    } finally {
+      classifyBtn.disabled = false;
+      classifyBtn.textContent = 'Check this item';
+    }
+  });
+
+  function renderResult(result) {
+    if (result.confident && CATEGORY_META[result.category]) {
+      const meta = CATEGORY_META[result.category];
+      resultBox.innerHTML = `
+        <div class="ai-result-card" style="background:${meta.color};">
+          <h4>✓ ${meta.label}</h4>
+          <p>${escapeHtml(result.reasoning || meta.tip)}</p>
+        </div>`;
+    } else {
+      resultBox.innerHTML = `
+        <div class="ai-result-uncertain">
+          <h4>Not sure — here's what to check</h4>
+          <p>${escapeHtml(result.reasoning || "This item doesn't clearly match one of the 4 categories.")}</p>
+          <p style="margin-top:0.5rem; font-weight:600;">${escapeHtml(result.guidance || 'Use your own judgment, or ask someone nearby.')}</p>
+        </div>`;
+    }
+  }
+
+  function renderError(message) {
+    resultBox.innerHTML = `<div class="ai-result-error">⚠ ${escapeHtml(message)}</div>`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+})();
+</script>
 </body>
 </html>
