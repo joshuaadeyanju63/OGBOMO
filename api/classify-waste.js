@@ -1,6 +1,5 @@
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-
-const MODEL = 'claude-sonnet-5';
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 const VALID_CATEGORIES = [
   'organic',
@@ -12,66 +11,56 @@ const VALID_CATEGORIES = [
 const SYSTEM_PROMPT = `
 You are a waste-sorting assistant for Ogbomó, a civic platform in Ogbomosoland, Nigeria.
 
-Residents photograph a single household item and you tell them which of exactly 4 bins it belongs in — or say plainly that you're not sure.
+Classify the single household item shown in the image into exactly one of these categories:
 
-The 4 bins are:
+- organic: food scraps, peels, garden waste
+- plastic: bottles, sachets, plastic containers
+- paper: cardboard, newspaper, clean paper packaging
+- metal: cans, tins, scrap metal
 
-- organic: food scraps, peels, garden waste — compostable
-- plastic: bottles, sachets, plastic containers — rinsed and dry
-- paper: cardboard, newspaper, clean packaging
-- metal: cans, tins, scrap metal, glass bottles
+If the item is contaminated, unclear, blurry, mixed, or does not belong to these categories, return uncertain.
 
-A wrong confident answer is worse than an honest "not sure."
+A wrong confident answer is worse than an honest uncertain answer.
 
-Set confident to false whenever:
-
-- The item is contaminated or mixed.
-- The item doesn't belong in any of the 4 categories.
-- The photo is blurry, too dark, too far away, or unclear.
-- The photo shows multiple different items and it is unclear which one to classify.
-- You have genuine doubt about the correct category.
-
-When confident is false, set category to "uncertain".
-
-Respond ONLY with valid JSON in exactly this shape:
+Return ONLY valid JSON in exactly this format:
 
 {
-  "confident": true or false,
-  "category": "organic" | "plastic" | "paper" | "metal" | "uncertain",
-  "reasoning": "one short sentence",
-  "guidance": "one short sentence of practical advice"
+  "confident": true,
+  "category": "organic",
+  "reasoning": "Short explanation.",
+  "guidance": "Short practical advice."
 }
+
+The category must be exactly one of:
+organic, plastic, paper, metal, uncertain.
+
+If uncertain, confident MUST be false and category MUST be "uncertain".
 `;
 
 module.exports = async function handler(req, res) {
 
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    res.status(405).json({
+    return res.status(405).json({
       error: 'Method not allowed. Use POST.'
     });
-    return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    console.error('ANTHROPIC_API_KEY is not configured.');
+    console.error('GEMINI_API_KEY is missing');
 
-    res.status(500).json({
-      error: 'Server misconfiguration.'
+    return res.status(500).json({
+      error: 'Gemini API key is not configured.'
     });
-
-    return;
   }
 
   const { imageDataUrl } = req.body || {};
@@ -81,146 +70,142 @@ module.exports = async function handler(req, res) {
     typeof imageDataUrl !== 'string' ||
     !imageDataUrl.startsWith('data:image/')
   ) {
-    res.status(400).json({
+    return res.status(400).json({
       error: 'Missing or invalid imageDataUrl.'
     });
-
-    return;
   }
 
-  // Extract media type and base64 image
   const match = imageDataUrl.match(
     /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
   );
 
   if (!match) {
-    res.status(400).json({
+    return res.status(400).json({
       error: 'Could not parse image data URL.'
     });
-
-    return;
   }
 
   const [, mediaType, base64Data] = match;
 
   try {
 
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
+    const response = await fetch(
+      `${GEMINI_API_URL}?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
 
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
+        headers: {
+          'Content-Type': 'application/json'
+        },
 
-      body: JSON.stringify({
-        model: MODEL,
-
-        max_tokens: 300,
-
-        system: SYSTEM_PROMPT,
-
-        messages: [
-          {
-            role: 'user',
-
-            content: [
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
               {
-                type: 'image',
-
-                source: {
-                  type: 'base64',
-                  media_type: mediaType,
-                  data: base64Data
-                }
-              },
-
-              {
-                type: 'text',
-                text: 'Classify this item. Respond only with the JSON object described in your instructions.'
+                text: SYSTEM_PROMPT
               }
             ]
-          }
-        ]
-      })
-    });
+          },
 
-    // IMPORTANT:
-    // Read the response body ONCE.
+          contents: [
+            {
+              role: 'user',
+
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: mediaType,
+                    data: base64Data
+                  }
+                },
+
+                {
+                  text: 'Classify this waste item. Return only the requested JSON.'
+                }
+              ]
+            }
+          ],
+
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json'
+          }
+        })
+      }
+    );
+
     const responseText = await response.text();
 
     if (!response.ok) {
 
       console.error(
-        'Anthropic API error:',
+        'Gemini API error:',
         response.status,
         responseText
       );
 
-      res.status(502).json({
-        error: 'Anthropic API request failed.',
+      return res.status(502).json({
+        error: 'Gemini API request failed.',
         status: response.status,
         details: responseText
       });
-
-      return;
     }
 
-    // Parse the already-read response
     let data;
 
     try {
       data = JSON.parse(responseText);
-    } catch (parseError) {
+    } catch (error) {
 
       console.error(
-        'Invalid JSON returned by Anthropic:',
+        'Could not parse Gemini response:',
         responseText
       );
 
-      res.status(502).json({
-        error: 'Invalid response from classifier service.'
+      return res.status(502).json({
+        error: 'Invalid response from Gemini.'
       });
-
-      return;
     }
 
-    const rawText = (data.content || [])
-      .filter(block => block.type === 'text')
-      .map(block => block.text)
-      .join('\n')
-      .trim();
+    const rawText =
+      data?.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || '')
+        .join('')
+        .trim();
+
+    if (!rawText) {
+
+      console.error(
+        'Gemini returned no text:',
+        responseText
+      );
+
+      return res.status(502).json({
+        error: 'Gemini returned an empty response.'
+      });
+    }
 
     let parsed;
 
     try {
 
-      const cleaned = rawText
-        .replace(/^```json\s*/i, '')
-        .replace(/```\s*$/i, '')
-        .trim();
+      parsed = JSON.parse(rawText);
 
-      parsed = JSON.parse(cleaned);
-
-    } catch (parseError) {
+    } catch (error) {
 
       console.error(
-        'Failed to parse model response:',
+        'Invalid JSON from Gemini:',
         rawText
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         confident: false,
         category: 'uncertain',
-        reasoning: 'The classifier had trouble analyzing this photo.',
-        guidance: 'Try a clearer, well-lit photo of a single item.'
+        reasoning: 'The classifier could not reliably analyze this photo.',
+        guidance: 'Try taking a clearer photo of a single item.'
       });
-
-      return;
     }
 
-    // Validate category
     const category = VALID_CATEGORIES.includes(parsed.category)
       ? parsed.category
       : 'uncertain';
@@ -229,37 +214,32 @@ module.exports = async function handler(req, res) {
       category !== 'uncertain' &&
       parsed.confident === true;
 
-    res.status(200).json({
-      confident,
-
-      category: confident
-        ? category
-        : 'uncertain',
-
+    return res.status(200).json({
+      confident: confident,
+      category: confident ? category : 'uncertain',
       reasoning:
         typeof parsed.reasoning === 'string'
           ? parsed.reasoning
           : '',
-
       guidance:
         typeof parsed.guidance === 'string'
           ? parsed.guidance
-          : 'When in doubt, sort this manually using the waste guide.'
+          : 'When in doubt, check the waste guide manually.'
     });
 
-  } catch (err) {
+  } catch (error) {
 
     console.error(
-      'FULL CLASSIFIER ERROR:',
-      err
+      'FULL GEMINI CLASSIFIER ERROR:',
+      error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Classifier failed.',
       message:
-        err instanceof Error
-          ? err.message
-          : String(err)
+        error instanceof Error
+          ? error.message
+          : String(error)
     });
   }
 };
