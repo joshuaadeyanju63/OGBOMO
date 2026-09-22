@@ -115,7 +115,20 @@ module.exports = async function handler(req, res) {
     if (!response.ok) {
       const errText = await response.text();
       console.error('Anthropic API error:', response.status, errText);
-      res.status(502).json({ error: 'The classifier service is temporarily unavailable. Please try again.' });
+     if (!response.ok) {
+    const errText = await response.text();
+
+    console.error('ANTHROPIC STATUS:', response.status);
+    console.error('ANTHROPIC RESPONSE:', errText);
+
+    res.status(502).json({
+        error: 'Anthropic API request failed',
+        anthropicStatus: response.status,
+        details: errText
+    });
+
+    return;
+}
       return;
     }
 
