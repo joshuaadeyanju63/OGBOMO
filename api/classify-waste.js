@@ -171,7 +171,12 @@ module.exports = async function handler(req, res) {
       guidance: typeof parsed.guidance === 'string' ? parsed.guidance : 'When in doubt, sort this manually using the 4-bin guide above.',
     });
   } catch (err) {
-    console.error('Unexpected error calling Anthropic API:', err);
-    res.status(500).json({ error: 'Something went wrong reaching the classifier. Please try again.' });
-  }
+    console.error('FULL CLASSIFIER ERROR:', err);
+
+    res.status(500).json({
+        error: 'Classifier failed',
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+    });
+}
 };
