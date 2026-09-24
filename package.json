@@ -4,6 +4,6 @@
   "private": true,
   "description": "Ogbomọ́ — civic waste management platform for Ogbomosoland",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   }
 }
