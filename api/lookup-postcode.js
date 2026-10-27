@@ -184,11 +184,10 @@ module.exports = async function handler(req, res) {
       );
 
       console.log('POSTCODE LOOKUP RESPONSE', {
-  topLevelKeys: v ? Object.keys(v) : [],
-  dataKeys: v?.data ? Object.keys(v.data) : [],
-  valid: v?.data?.valid,
-  responseCode: v?.code ?? null,
-  message: v?.message ?? null,
+  postcode: v?.data?.postcode ?? null,
+  valid: v?.data?.valid ?? null,
+  status: v?.data?.status ?? null,
+  verified: v?.data?.verified ?? null,
 });
 
       if (v && v.data && typeof v.data.valid === 'boolean') {
