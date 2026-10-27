@@ -6,6 +6,11 @@
 <title>CleanPoints & Wallet — Ogbomọ́ Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="admin.css">
 </head>
 <body>
@@ -138,24 +143,6 @@ TRANSACTIONS.forEach(t => {
   </tr>`;
 });
 
-function buildSidebar(active) {
-  return `<div class="sidebar-brand"><div class="sidebar-brand-name">OGBOMỌ́</div><div class="sidebar-brand-sub">Admin Portal</div></div>
-  <div id="sidebar-role-badge" class="sidebar-role-badge"><span class="sidebar-role-dot"></span><span id="sidebar-role-label">Super Admin</span></div>
-  <nav class="sidebar-nav">
-    <div class="sidebar-section-label">Overview</div>
-    <a href="admin-dashboard.html" class="sidebar-link"><span class="icon">◼</span>Dashboard</a>
-    <div class="sidebar-section-label">Operations</div>
-    <a href="admin-reports.html" class="sidebar-link"><span class="icon">🎫</span>Reports<span class="notif-dot"></span></a>
-    <a href="admin-routes.html" class="sidebar-link"><span class="icon">🚛</span>Routes & Crews</a>
-    <div class="sidebar-section-label">Finance</div>
-    <a href="admin-wallet.html" class="sidebar-link ${active==='wallet'?'active':''}"><span class="icon">💰</span>CleanPoints & Wallet</a>
-    <div class="sidebar-section-label">Platform</div>
-    <a href="admin-users.html" class="sidebar-link"><span class="icon">👥</span>Users</a>
-    <div class="sidebar-section-label">Account</div>
-    <a href="index.html" class="sidebar-link"><span class="icon">↗</span>Public Site</a>
-  </nav>
-  <div class="sidebar-footer"><div class="sidebar-user"><div class="sidebar-avatar" id="sidebar-avatar">KN</div><div class="sidebar-user-info"><div class="sidebar-user-name" id="sidebar-user-name">Loading…</div><div class="sidebar-user-role" id="sidebar-user-role"></div></div></div><button class="sidebar-logout" id="sidebar-logout-btn">Sign out</button></div>`;
-}
 </script>
 </body>
 </html>
