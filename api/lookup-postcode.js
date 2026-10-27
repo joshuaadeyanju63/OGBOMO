@@ -66,11 +66,23 @@ async function nipost(path, apiKey) {
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
     const resp = await fetch(BASE_URL + path, {
-      headers: { 'X-API-Key': apiKey, Accept: 'application/json' },
-      signal: ctrl.signal,
-    });
-    let body = null;
-    try { body = await resp.json(); } catch (_) { /* non-JSON error body */ }
+  headers: {
+    'X-API-Key': apiKey,
+    Accept: 'application/json',
+  },
+  signal: ctrl.signal,
+});
+
+console.log('POSTCODE API DIAGNOSTIC', {
+  path,
+  status: resp.status,
+  ok: resp.ok,
+});
+
+let body = null;
+try {
+  body = await resp.json();
+} catch (_) {} { /* non-JSON error body */ }
     
 if (!resp.ok) {
   const code = body && body.error && body.error.code;
