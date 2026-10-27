@@ -145,19 +145,41 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    // 2) Best-effort free validity check (Level 1). Never blocks the result.
+    
+    // 2) Best-effort Level 1 validity check
     let verified = null; // true | false | null (unknown)
+
     try {
-      const v = await nipost('/v1/lookup?level=1&code=' + encodeURIComponent(parts.canonical), apiKey);
-      if (v && v.data && typeof v.data.valid === 'boolean') verified = v.data.valid;
+      const v = await nipost(
+        '/v1/lookup?level=1&code=' +
+          encodeURIComponent(parts.canonical),
+        apiKey
+      );
+
+      if (v && v.data && typeof v.data.valid === 'boolean') {
+        verified = v.data.valid;
+      } else {
+        console.warn('Unexpected postcode lookup response shape');
+      }
     } catch (err) {
-      if (err.status === 404) verified = false;
-      // 401/403/402/429/5xx/timeouts: leave verified as null (unknown)
+      // Log diagnostic information, never the API key.
+      console.warn('Level 1 postcode lookup error:', {
+        status: err.status,
+        code: err.code,
+      });
+
+      // Don't classify an ambiguous upstream error as invalid.
+      // Confirm the official API's documented 404 semantics first.
+      verified = null;
     }
+
     if (verified === false) {
-      res.status(404).json({ error: 'That postcode was not found. Please check it, or use the Find my postcode link.' });
+      res.status(404).json({
+        error: 'That postcode was not found. Please check it, or use the Find my postcode link.',
+      });
       return;
     }
+
 
     // 3) Is it one of Ogbomosoland's five LGAs?
     const lgaName = String(lga.name || '');
