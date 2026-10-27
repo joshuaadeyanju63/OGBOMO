@@ -207,13 +207,6 @@ module.exports = async function handler(req, res) {
       verified = null;
     }
 
-    if (verified === false) {
-      res.status(404).json({
-        error: 'That postcode was not found. Please check it, or use the Find my postcode link.',
-      });
-      return;
-    }
-
 
     // 3) Is it one of Ogbomosoland's five LGAs?
     const lgaName = String(lga.name || '');
@@ -224,7 +217,7 @@ module.exports = async function handler(req, res) {
       state: { code: state.code, name: state.name || null },
       lga: { code: lga.code, name: lgaName || null },
       ogbomoLga: ogbomo ? ogbomo.name : null,   // canonical Ogbomọ́ LGA name, or null
-      verified,                                  // true / null (unknown); false never reaches here
+      verified, // true = valid; false = not found; null = unable to verify
     });
   } catch (err) {
     console.error('Postcode lookup failed:', err.status, err.code); // never log the key
@@ -237,3 +230,5 @@ module.exports = async function handler(req, res) {
     }
   }
 };
+
+
