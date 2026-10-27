@@ -114,6 +114,12 @@
               <input type="text" id="issue-location" placeholder="Street, market, or nearest landmark" required>
             </div>
             <div class="field">
+              <span>Postcode (optional)</span>
+              <input type="text" id="issue-postcode" placeholder="e.g. EK-01-A03-FK-01" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" aria-describedby="postcode-help postcode-status">
+              <small id="postcode-help" style="display:block; margin-top:0.35rem; color:var(--ink-soft); font-size:0.8rem;">11 characters. Don't know yours? <a href="https://postcode.gov.ng" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Find my postcode</a>. You can still submit without it.</small>
+              <p id="postcode-status" role="status" aria-live="polite" style="margin:0.35rem 0 0; font-size:0.85rem; min-height:1.2em;"></p>
+            </div>
+            <div class="field">
               <span>Description</span>
               <textarea id="issue-desc" rows="4" placeholder="What's going on?" required></textarea>
             </div>
@@ -203,6 +209,56 @@
     document.getElementById(id).addEventListener('change', syncPreview);
   });
 
+  // ── Postcode lookup (optional) ────────────────────────────────────────
+  // Calls our own /api/lookup-postcode (the NIPOST key stays on the server).
+  // The result is a suggestion only; failure never blocks filing a report.
+  const pcInput = document.getElementById('issue-postcode');
+  const pcStatus = document.getElementById('postcode-status');
+  let postcodeResult = null;   // { postcode, ogbomoLga, lga:{name}, ... } or null
+  let pcTimer = null;
+  let pcSeq = 0;               // ignore out-of-date responses
+
+  function setPcStatus(text, kind) {
+    pcStatus.textContent = text;
+    pcStatus.style.color = kind === 'ok' ? '#3C8F63' : (kind === 'warn' ? '#A6472D' : 'var(--ink-soft)');
+  }
+
+  function compactPostcode(v) { return String(v || '').toUpperCase().replace(/[\s-]+/g, ''); }
+
+  async function lookupPostcode() {
+    const compact = compactPostcode(pcInput.value);
+    postcodeResult = null;
+    if (!compact) { setPcStatus('', ''); return; }
+    if (compact.length < 11) { setPcStatus('Keep typing — a postcode has 11 characters.', ''); return; }
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{3}[A-Z]{2}\d{2}$/.test(compact)) {
+      setPcStatus('That doesn\'t look like a postcode (example: EK-01-A03-FK-01). You can still submit without it.', 'warn');
+      return;
+    }
+    const mySeq = ++pcSeq;
+    setPcStatus('Checking postcode…', '');
+    try {
+      const resp = await fetch('/api/lookup-postcode?code=' + encodeURIComponent(compact));
+      const data = await resp.json().catch(() => ({}));
+      if (mySeq !== pcSeq) return;
+      if (!resp.ok) { setPcStatus((data.error || 'Could not check that postcode.') + ' You can still submit.', 'warn'); return; }
+      postcodeResult = data;
+      if (data.ogbomoLga) {
+        setPcStatus('✓ ' + data.postcode + ' — ' + data.ogbomoLga + ' LGA. Your report will go to this council.', 'ok');
+      } else {
+        const where = [data.lga && data.lga.name, data.state && data.state.name].filter(Boolean).join(', ');
+        setPcStatus(data.postcode + ' is in ' + (where || 'another area') + ', outside Ogbomosoland. We\'ll use your profile LGA instead.', 'warn');
+      }
+    } catch (_) {
+      if (mySeq !== pcSeq) return;
+      setPcStatus('Could not reach the postcode check. You can still submit without it.', 'warn');
+    }
+  }
+
+  pcInput.addEventListener('input', () => {
+    clearTimeout(pcTimer);
+    pcTimer = setTimeout(lookupPostcode, 500);
+  });
+
   const LGA_BY_ZONE_CODE = { OGN:'Ogbomosho North', OGS:'Ogbomosho South', ORI:'Oriire', OGO:'Ogo-Oluwa', SUR:'Surulere' };
 
   form.addEventListener('submit', async e => {
@@ -218,7 +274,8 @@
     const report = await OgbomoStore.createReport({
       userEmail: user ? user.email : 'anonymous@ogbomo.ng',
       userName: user ? user.name : 'Resident',
-      lga: user && user.lga ? user.lga : (LGA_BY_ZONE_CODE[document.getElementById('zone-picker')?.value] || 'Unspecified'),
+      lga: (postcodeResult && postcodeResult.ogbomoLga) || (user && user.lga ? user.lga : (LGA_BY_ZONE_CODE[document.getElementById('zone-picker')?.value] || 'Unspecified')),
+      postcode: postcodeResult ? postcodeResult.postcode : null,
       type: document.getElementById('issue-type').value,
       stream: document.getElementById('issue-stream').value,
       location: document.getElementById('issue-location').value,
@@ -233,6 +290,7 @@
     pill.style.color = 'var(--indigo)';
 
     form.reset();
+    postcodeResult = null; pcSeq++; setPcStatus('', '');
     syncPreview();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit ticket';
