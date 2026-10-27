@@ -6,6 +6,11 @@
 <title>Admin Login — Ogbomọ́</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="admin.css">
 <style>
   body { background: #111827; display:flex; align-items:center; justify-content:center; min-height:100vh; }
@@ -34,6 +39,7 @@
   .demo-row .demo-email { color:#9CA3AF; font-family:'Space Mono',monospace; font-size:0.72rem; }
   .demo-row .demo-role { font-family:'Space Mono',monospace; font-size:0.65rem; padding:0.15rem 0.45rem; border-radius:999px; }
   .demo-row .role-super { background:rgba(199,154,61,0.15); color:#C79A3D; }
+  .demo-row .role-crew { background:rgba(99,132,255,0.15); color:#8FA8FF; }
   .demo-row .role-council { background:rgba(60,143,99,0.15); color:#5EC290; }
   .back-link { text-align:center; margin-top:1.2rem; font-size:0.82rem; color:#6B7280; }
   .back-link a { color:#9CA3AF; }
@@ -54,7 +60,7 @@
 
   <div class="login-card">
     <h2>Sign in to Admin</h2>
-    <p>This portal is restricted to authorised platform and council staff only.</p>
+    <p>This portal is restricted to authorised platform, council and collection-crew staff only.</p>
 
     <div class="login-error" id="login-error"></div>
 
@@ -76,13 +82,37 @@
         <span class="demo-email">admin@ogbomo.ng</span>
         <span class="demo-role role-super">Super Admin</span>
       </div>
+      <div class="demo-row" data-email="lgaadmin.north@ogbomo.ng" data-pw="Lga@2026">
+        <span class="demo-email">lgaadmin.north@ogbomo.ng</span>
+        <span class="demo-role role-council">LGA Admin — North</span>
+      </div>
       <div class="demo-row" data-email="north@ogbomo.ng" data-pw="Council@2026">
         <span class="demo-email">north@ogbomo.ng</span>
-        <span class="demo-role role-council">Council — North</span>
+        <span class="demo-role role-council">Officer — North</span>
       </div>
       <div class="demo-row" data-email="south@ogbomo.ng" data-pw="Council@2026">
         <span class="demo-email">south@ogbomo.ng</span>
-        <span class="demo-role role-council">Council — South</span>
+        <span class="demo-role role-council">Officer — South</span>
+      </div>
+      <div class="demo-row" data-email="oriire@ogbomo.ng" data-pw="Council@2026">
+        <span class="demo-email">oriire@ogbomo.ng</span>
+        <span class="demo-role role-council">Officer — Oriire</span>
+      </div>
+      <div class="demo-row" data-email="ogooluwa@ogbomo.ng" data-pw="Council@2026">
+        <span class="demo-email">ogooluwa@ogbomo.ng</span>
+        <span class="demo-role role-council">Officer — Ogo-Oluwa</span>
+      </div>
+      <div class="demo-row" data-email="surulere@ogbomo.ng" data-pw="Council@2026">
+        <span class="demo-email">surulere@ogbomo.ng</span>
+        <span class="demo-role role-council">Officer — Surulere</span>
+      </div>
+      <div class="demo-row" data-email="crew.a@ogbomo.ng" data-pw="Crew@2026">
+        <span class="demo-email">crew.a@ogbomo.ng</span>
+        <span class="demo-role role-crew">Collector — Crew A</span>
+      </div>
+      <div class="demo-row" data-email="crew.c@ogbomo.ng" data-pw="Crew@2026">
+        <span class="demo-email">crew.c@ogbomo.ng</span>
+        <span class="demo-role role-crew">Collector — Crew C</span>
       </div>
     </div>
   </div>
@@ -93,7 +123,7 @@
 <script src="admin-auth.js"></script>
 <script>
   // Redirect if already logged in
-  if (AdminAuth.isLoggedIn()) window.location.replace('admin-dashboard.html');
+  if (AdminAuth.isLoggedIn()) window.location.replace(AdminAuth.homePage(AdminAuth.getRole()));
 
   // Fill demo credentials on click
   document.querySelectorAll('.demo-row').forEach(row => {
@@ -119,7 +149,7 @@
     setTimeout(() => {
       const result = AdminAuth.attemptLogin(email, pw);
       if (result.success) {
-        window.location.replace('admin-dashboard.html');
+        window.location.replace(AdminAuth.homePage(result.user.role));
       } else {
         errEl.textContent = result.error;
         errEl.classList.add('show');
