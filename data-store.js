@@ -77,7 +77,7 @@ const OgbomoStore = (() => {
 
   // Creates a report. `photoFile` is an optional File object from an
   // <input type="file">; it will be compressed before saving.
-  async function createReport({ userEmail, userName, lga, type, stream, location, description, photoFile }) {
+  async function createReport({ userEmail, userName, lga, type, stream, location, description, photoFile, postcode }) {
     const photoDataUrl = await compressPhoto(photoFile);
     const reports = getAllReports();
     const id = 'OGB-' + (5000 + reports.length + Math.floor(Math.random() * 100));
@@ -86,6 +86,7 @@ const OgbomoStore = (() => {
       userEmail,
       userName: userName || (userEmail ? userEmail.split('@')[0] : 'Resident'),
       lga: lga || 'Unspecified',
+      postcode: postcode || null, // NIPOST postcode (optional), e.g. 'EK-01-A03-FK-01'
       type,
       stream,
       location,
