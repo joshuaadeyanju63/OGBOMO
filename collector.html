@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Jobs — Ogbomọ́ Crew</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<style>
+  :root {
+    --ink:#1E1B18; --ink-soft:#6B6055; --paper:#FFFFFF; --paper-tint:#F6F4F0; --line:#E7E2D9;
+    --indigo:#1F2E52; --indigo-soft:#EEF1F7; --gold:#C79A3D; --gold-soft:#FBF3E2;
+    --camwood:#A6472D; --camwood-soft:#FBF0ED; --green:#3C8F63; --green-soft:#EBF5F0;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Work Sans',system-ui,sans-serif; color:var(--ink); background:var(--paper-tint); line-height:1.45; }
+  .mono { font-family:'Space Mono',monospace; }
+  header.crew-top { background:var(--indigo); color:#fff; padding:0.9rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:0.8rem; position:sticky; top:0; z-index:5; }
+  .crew-brand { font-family:'Unbounded',sans-serif; font-size:1rem; letter-spacing:0.02em; }
+  .crew-brand small { display:block; font-family:'Work Sans',sans-serif; font-size:0.72rem; font-weight:500; opacity:0.75; letter-spacing:0; }
+  .crew-logout { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.4); border-radius:8px; padding:0.55rem 0.9rem; min-height:44px; font:inherit; font-size:0.85rem; cursor:pointer; }
+  main { max-width:640px; margin:0 auto; padding:1rem 1rem 3rem; }
+  .hello h1 { font-family:'Unbounded',sans-serif; font-size:1.15rem; margin:0.4rem 0 0.2rem; }
+  .hello p { margin:0; color:var(--ink-soft); font-size:0.9rem; }
+  .demo-note { background:var(--gold-soft); border:1px solid #E8D3A0; color:#6B4E1A; border-radius:10px; padding:0.7rem 0.9rem; font-size:0.82rem; margin:0.9rem 0; }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:0.6rem; margin:0.9rem 0; }
+  .stat { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:0.7rem; text-align:center; }
+  .stat b { display:block; font-family:'Space Mono',monospace; font-size:1.4rem; }
+  .stat span { font-size:0.72rem; color:var(--ink-soft); }
+  .tabs { display:flex; gap:0.5rem; margin:0.4rem 0 0.9rem; }
+  .tab { flex:1; min-height:44px; border:1px solid var(--line); background:var(--paper); border-radius:10px; font:inherit; font-weight:600; font-size:0.9rem; cursor:pointer; }
+  .tab[aria-selected="true"] { background:var(--indigo); color:#fff; border-color:var(--indigo); }
+  .job { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:1rem; margin-bottom:0.9rem; }
+  .job-top { display:flex; justify-content:space-between; align-items:flex-start; gap:0.6rem; }
+  .job h2 { font-size:1rem; margin:0 0 0.15rem; }
+  .job .id { font-family:'Space Mono',monospace; font-size:0.72rem; color:var(--ink-soft); }
+  .badge { display:inline-block; font-size:0.72rem; font-weight:600; padding:0.25rem 0.6rem; border-radius:999px; white-space:nowrap; }
+  .b-assigned { background:var(--gold-soft); color:#93690F; }
+  .b-progress { background:var(--indigo-soft); color:var(--indigo); }
+  .b-collected { background:var(--green-soft); color:var(--green); }
+  .b-issue { background:var(--camwood-soft); color:var(--camwood); }
+  .row { margin-top:0.6rem; font-size:0.9rem; }
+  .row .k { color:var(--ink-soft); font-size:0.75rem; display:block; }
+  .photo { width:100%; max-height:200px; object-fit:cover; border-radius:10px; margin-top:0.7rem; cursor:zoom-in; }
+  .actions { display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.9rem; }
+  .btn { flex:1 1 140px; min-height:48px; border-radius:10px; border:1px solid var(--line); background:var(--paper); font:inherit; font-weight:600; font-size:0.95rem; cursor:pointer; }
+  .btn-primary { background:var(--indigo); color:#fff; border-color:var(--indigo); }
+  .btn-go { background:var(--green); color:#fff; border-color:var(--green); }
+  .btn-warn { color:var(--camwood); border-color:#E5C2B8; }
+  .btn:focus-visible, .tab:focus-visible, .crew-logout:focus-visible, select:focus-visible, textarea:focus-visible { outline:3px solid var(--gold); outline-offset:2px; }
+  .problem { margin-top:0.8rem; padding:0.8rem; background:var(--camwood-soft); border-radius:10px; }
+  .problem label { display:block; font-size:0.8rem; font-weight:600; margin-bottom:0.3rem; }
+  .problem select, .problem textarea { width:100%; font:inherit; padding:0.6rem; border:1px solid var(--line); border-radius:8px; margin-bottom:0.6rem; min-height:44px; }
+  .hazard { font-size:0.82rem; color:var(--camwood); font-weight:600; margin:0 0 0.6rem; }
+  .empty { text-align:center; color:var(--ink-soft); padding:2rem 1rem; background:var(--paper); border:1px dashed var(--line); border-radius:14px; }
+  .lightbox { position:fixed; inset:0; background:rgba(17,24,39,0.88); z-index:50; display:flex; align-items:center; justify-content:center; cursor:zoom-out; }
+  .lightbox img { max-width:94vw; max-height:90vh; border-radius:8px; }
+</style>
+</head>
+<body>
+
+<header class="crew-top">
+  <div class="crew-brand">OGBOMỌ́ <small id="crew-sub">Crew portal</small></div>
+  <button class="crew-logout" id="logout-btn">Sign out</button>
+</header>
+
+<main>
+  <section class="hello">
+    <h1 id="greeting">Ẹ káàbọ̀</h1>
+    <p id="crew-line"></p>
+  </section>
+
+  <div class="demo-note" role="note">
+    <strong>Demo:</strong> jobs appear here when a council officer assigns them <em>in this same browser</em>.
+    A shared database for real crews is part of the next version.
+  </div>
+
+  <div class="stats" aria-label="Job summary">
+    <div class="stat"><b id="n-todo">0</b><span>To do</span></div>
+    <div class="stat"><b id="n-progress">0</b><span>In progress</span></div>
+    <div class="stat"><b id="n-done">0</b><span>Collected</span></div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Job list">
+    <button class="tab" role="tab" id="tab-todo" aria-selected="true" data-tab="todo">To do</button>
+    <button class="tab" role="tab" id="tab-done" aria-selected="false" data-tab="done">Done</button>
+  </div>
+
+  <div id="jobs" aria-live="polite"></div>
+</main>
+
+<script src="admin-auth.js"></script>
+<script src="data-store.js"></script>
+<script>
+if (AdminAuth.protectCollectorPage()) {
+  const E = OgbomoStore.esc;
+  const me = AdminAuth.getSession();
+  const crew = OgbomoStore.getCrew(me.crewId);
+  const STATUS_LABEL = { assigned:'To do', progress:'In progress', collected:'Collected', issue:'Problem reported' };
+  const ISSUE_REASONS = ['Access blocked', 'Too much for the truck', 'Hazardous items (do not touch)', 'Wrong location', 'Other'];
+  let tab = 'todo';
+  let problemOpenFor = null;
+
+  document.getElementById('logout-btn').addEventListener('click', AdminAuth.logout);
+  document.getElementById('greeting').textContent = 'Ẹ káàbọ̀, ' + (me.name || '').split(' ')[0];
+  document.getElementById('crew-line').textContent = (crew ? crew.name : 'Crew') + ' · ' + (me.lga || '');
+  document.getElementById('crew-sub').textContent = (crew ? crew.name : 'Crew') + ' · ' + (me.lga || '');
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tab = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+      render();
+    });
+  });
+
+  function photoFor(reportId) {
+    const r = OgbomoStore.getAllReports().find(x => x.id === reportId);
+    return r && r.photoDataUrl ? r.photoDataUrl : null;
+  }
+
+  function fmt(iso) {
+    try { return new Date(iso).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
+    catch (_) { return ''; }
+  }
+
+  function jobCard(j) {
+    const photo = photoFor(j.reportId);
+    let actions = '';
+    if (j.status === 'assigned') {
+      actions = `<button class="btn btn-primary" data-act="start" data-id="${E(j.reportId)}">Start job</button>
+                 <button class="btn btn-warn" data-act="problem" data-id="${E(j.reportId)}">Report a problem</button>`;
+    } else if (j.status === 'progress') {
+      actions = `<button class="btn btn-go" data-act="done" data-id="${E(j.reportId)}">Mark as collected</button>
+                 <button class="btn btn-warn" data-act="problem" data-id="${E(j.reportId)}">Report a problem</button>`;
+    } else if (j.status === 'issue') {
+      actions = `<button class="btn btn-primary" data-act="start" data-id="${E(j.reportId)}">Try again</button>`;
+    }
+    const problemForm = problemOpenFor === j.reportId ? `
+      <div class="problem">
+        <label for="reason-${E(j.reportId)}">What is the problem?</label>
+        <select id="reason-${E(j.reportId)}">${ISSUE_REASONS.map(r => `<option>${E(r)}</option>`).join('')}</select>
+        <p class="hazard">If you see batteries, chemicals, sharp or medical items, do not handle them. Tell your officer.</p>
+        <label for="note-${E(j.reportId)}">Note (optional)</label>
+        <textarea id="note-${E(j.reportId)}" rows="2" maxlength="300"></textarea>
+        <div class="actions" style="margin-top:0">
+          <button class="btn btn-warn" data-act="send-problem" data-id="${E(j.reportId)}">Send to officer</button>
+          <button class="btn" data-act="cancel-problem" data-id="${E(j.reportId)}">Cancel</button>
+        </div>
+      </div>` : '';
+    return `
+      <article class="job">
+        <div class="job-top">
+          <div><h2>${E(j.type)}</h2><div class="id">${E(j.reportId)}</div></div>
+          <span class="badge b-${E(j.status)}">${E(STATUS_LABEL[j.status] || j.status)}</span>
+        </div>
+        <div class="row"><span class="k">Location</span>${E(j.location)}</div>
+        ${j.stream ? `<div class="row"><span class="k">Waste stream</span>${E(j.stream)}</div>` : ''}
+        ${j.description ? `<div class="row"><span class="k">Resident's note</span>${E(j.description)}</div>` : ''}
+        ${photo ? `<img class="photo" src="${E(photo)}" alt="Photo from the resident's report" data-act="zoom">` : ''}
+        <div class="row"><span class="k">Assigned by ${E(j.assignedBy || 'officer')}</span>${E(fmt(j.assignedAt))}</div>
+        ${j.status === 'issue' && j.issueReason ? `<div class="row" style="color:var(--camwood)"><span class="k">Problem sent</span>${E(j.issueReason)}${j.note ? ' — ' + E(j.note) : ''}</div>` : ''}
+        ${j.status === 'collected' ? `<div class="row"><span class="k">Collected</span>${E(fmt(j.updatedAt))}</div>` : ''}
+        ${actions ? `<div class="actions">${actions}</div>` : ''}
+        ${problemForm}
+      </article>`;
+  }
+
+  function render() {
+    const jobs = OgbomoStore.getJobsByCrew(me.crewId)
+      .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    document.getElementById('n-todo').textContent = jobs.filter(j => j.status === 'assigned' || j.status === 'issue').length;
+    document.getElementById('n-progress').textContent = jobs.filter(j => j.status === 'progress').length;
+    document.getElementById('n-done').textContent = jobs.filter(j => j.status === 'collected').length;
+
+    const list = jobs.filter(j => tab === 'done' ? j.status === 'collected' : j.status !== 'collected');
+    const box = document.getElementById('jobs');
+    if (!list.length) {
+      box.innerHTML = tab === 'done'
+        ? '<div class="empty">No finished jobs yet.</div>'
+        : '<div class="empty"><strong>No jobs right now.</strong><br>Your council officer will assign reports to your crew.<br><span style="font-size:0.8rem">Demo tip: sign in as an officer in this browser, assign a report to ' + E(crew ? crew.name : 'this crew') + ', then come back.</span></div>';
+      return;
+    }
+    box.innerHTML = list.map(jobCard).join('');
+  }
+
+  document.getElementById('jobs').addEventListener('click', e => {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const act = el.dataset.act, id = el.dataset.id;
+    if (act === 'zoom') {
+      const o = document.createElement('div');
+      o.className = 'lightbox';
+      o.innerHTML = '<img alt="Report photo, enlarged">';
+      o.firstChild.src = el.src;
+      o.addEventListener('click', () => o.remove());
+      document.body.appendChild(o);
+      return;
+    }
+    if (act === 'start') OgbomoStore.updateJobStatus(id, 'progress', me.name);
+    if (act === 'done') {
+      if (!confirm('Mark this job as collected?')) return;
+      OgbomoStore.updateJobStatus(id, 'collected', me.name);
+    }
+    if (act === 'problem') { problemOpenFor = id; render(); return; }
+    if (act === 'cancel-problem') { problemOpenFor = null; render(); return; }
+    if (act === 'send-problem') {
+      const reason = document.getElementById('reason-' + id).value;
+      const note = document.getElementById('note-' + id).value.trim();
+      OgbomoStore.updateJobStatus(id, 'issue', me.name, { issueReason: reason, note });
+      problemOpenFor = null;
+    }
+    render();
+  });
+
+  render();
+}
+</script>
+</body>
+</html>
