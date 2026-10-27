@@ -228,41 +228,6 @@ ACTIVITY.forEach(a => {
 });
 
 // ── Sidebar builder ───────────────────────────────────────────────────────
-function buildSidebar(active) {
-  const s = AdminAuth.isSuperAdmin();
-  return `
-  <div class="sidebar-brand">
-    <div class="sidebar-brand-name">OGBOMỌ́</div>
-    <div class="sidebar-brand-sub">Admin Portal</div>
-  </div>
-  <div id="sidebar-role-badge" class="sidebar-role-badge ${s ? '' : 'council'}">
-    <span class="sidebar-role-dot"></span>
-    <span id="sidebar-role-label">${s ? 'Super Admin' : 'Council Officer'}</span>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="sidebar-section-label">Overview</div>
-    <a href="admin-dashboard.html" class="sidebar-link ${active==='dashboard'?'active':''}"><span class="icon">◼</span>Dashboard</a>
-    <div class="sidebar-section-label">Operations</div>
-    <a href="admin-reports.html" class="sidebar-link ${active==='reports'?'active':''}"><span class="icon">🎫</span>Reports<span class="notif-dot"></span></a>
-    <a href="admin-routes.html" class="sidebar-link ${active==='routes'?'active':''}"><span class="icon">🚛</span>Routes & Crews</a>
-    ${s ? `<div class="sidebar-section-label">Finance</div>
-    <a href="admin-wallet.html" class="sidebar-link ${active==='wallet'?'active':''}"><span class="icon">💰</span>CleanPoints & Wallet</a>
-    <div class="sidebar-section-label">Platform</div>
-    <a href="admin-users.html" class="sidebar-link ${active==='users'?'active':''}"><span class="icon">👥</span>Users</a>` : ''}
-    <div class="sidebar-section-label">Account</div>
-    <a href="index.html" class="sidebar-link"><span class="icon">↗</span>Public Site</a>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="sidebar-user">
-      <div class="sidebar-avatar" id="sidebar-avatar">KN</div>
-      <div class="sidebar-user-info">
-        <div class="sidebar-user-name" id="sidebar-user-name">Loading…</div>
-        <div class="sidebar-user-role" id="sidebar-user-role"></div>
-      </div>
-    </div>
-    <button class="sidebar-logout" id="sidebar-logout-btn">Sign out</button>
-  </div>`;
-}
 </script>
 </body>
 </html>
