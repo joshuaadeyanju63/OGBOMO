@@ -12,6 +12,7 @@
 const OgbomoStore = (() => {
   const REPORTS_KEY = 'ogbomo_reports';
   const WALLET_KEY  = 'ogbomo_wallets'; // { [email]: { balance, transactions: [] } }
+  const JOBS_KEY    = 'ogbomo_assignments'; // [ job, ... ] — report-to-crew assignments
 
   // ── Generic storage helpers ─────────────────────────────────────────────
 
@@ -148,11 +149,105 @@ const OgbomoStore = (() => {
     return wallets[email];
   }
 
+  // ── Crews & job assignments ──────────────────────────────────────────────
+  // DEMO: crews are a fixed list; assignments live in this browser only, so a
+  // collector sees jobs assigned from the same browser. A real deployment
+  // needs a shared database (docs/05-data-model.md: Crew, DispatchJob).
+  //
+  // job = { reportId, type, stream, location, lga, description,
+  //         crewId, status: 'assigned'|'progress'|'collected'|'issue',
+  //         issueReason, note, assignedBy, assignedAt, updatedAt, updatedBy }
+  const CREWS = [
+    { id: 'crew-a', name: 'Crew A', lga: 'Ogbomosho North' },
+    { id: 'crew-b', name: 'Crew B', lga: 'Ogbomosho North' },
+    { id: 'crew-d', name: 'Crew D', lga: 'Ogbomosho North' },
+    { id: 'crew-c', name: 'Crew C', lga: 'Ogbomosho South' },
+    { id: 'crew-e', name: 'Crew E', lga: 'Oriire' },
+    { id: 'crew-f', name: 'Crew F', lga: 'Ogo-Oluwa' },
+    { id: 'crew-g', name: 'Crew G', lga: 'Surulere' },
+  ];
+  const JOB_STATUSES = ['assigned', 'progress', 'collected', 'issue'];
+
+  function getCrews(lga) {
+    return lga ? CREWS.filter(c => c.lga === lga) : CREWS.slice();
+  }
+
+  function getCrew(id) {
+    return CREWS.find(c => c.id === id) || null;
+  }
+
+  function getAllJobs() {
+    return readJSON(JOBS_KEY, []);
+  }
+
+  function getJobsByCrew(crewId) {
+    return getAllJobs().filter(j => j.crewId === crewId);
+  }
+
+  function getJobForReport(reportId) {
+    return getAllJobs().find(j => j.reportId === reportId) || null;
+  }
+
+  // Assign (or re-assign) a report to a crew. `report` needs id, type, stream,
+  // location, lga (+ optional description). Re-assigning resets status to 'assigned'.
+  function assignReport(report, crewId, byName) {
+    const crew = getCrew(crewId);
+    if (!report || !report.id || !crew) return null;
+    if (report.lga && crew.lga !== report.lga) return null; // crews work in their own LGA only
+    const jobs = getAllJobs();
+    const now = new Date().toISOString();
+    let job = jobs.find(j => j.reportId === report.id);
+    if (!job) {
+      job = { reportId: report.id, assignedAt: now };
+      jobs.unshift(job);
+    }
+    Object.assign(job, {
+      type: report.type || '', stream: report.stream || '', location: report.location || '',
+      lga: report.lga || crew.lga, description: report.description || '',
+      crewId, status: 'assigned', issueReason: '', note: '',
+      assignedBy: byName || 'Officer', assignedAt: now, updatedAt: now, updatedBy: byName || 'Officer',
+    });
+    writeJSON(JOBS_KEY, jobs);
+    return job;
+  }
+
+  function unassignReport(reportId) {
+    const jobs = getAllJobs().filter(j => j.reportId !== reportId);
+    writeJSON(JOBS_KEY, jobs);
+  }
+
+  // Collector (or officer) updates a job. `extra` may carry { issueReason, note }.
+  function updateJobStatus(reportId, status, byName, extra) {
+    if (!JOB_STATUSES.includes(status)) return null;
+    const jobs = getAllJobs();
+    const job = jobs.find(j => j.reportId === reportId);
+    if (!job) return null;
+    job.status = status;
+    job.updatedAt = new Date().toISOString();
+    job.updatedBy = byName || '';
+    job.issueReason = status === 'issue' ? ((extra && extra.issueReason) || '') : '';
+    job.note = (extra && extra.note) || '';
+    writeJSON(JOBS_KEY, jobs);
+    return job;
+  }
+
+  // Minimal HTML escaping for any user-supplied text put into innerHTML.
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   return {
     // reports
     getAllReports, getReportsByUser, getReportsByLGA, createReport, updateReportStatus,
     // wallet
     getWallet, addPoints, redeemPoints,
+    // crews & jobs (demo)
+    CREWS, getCrews, getCrew, getAllJobs, getJobsByCrew, getJobForReport,
+    assignReport, unassignReport, updateJobStatus,
+    // helpers
+    esc,
     // exposed for advanced/debug use
     compressPhoto,
   };
