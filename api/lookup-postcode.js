@@ -71,10 +71,23 @@ async function nipost(path, apiKey) {
     });
     let body = null;
     try { body = await resp.json(); } catch (_) { /* non-JSON error body */ }
-    if (!resp.ok) {
-      const code = body && body.error && body.error.code;
-      throw new UpstreamError(resp.status, code);
-    }
+    
+if (!resp.ok) {
+  const code = body && body.error && body.error.code;
+
+  console.error('Postcode upstream response:', {
+    path,
+    status: resp.status,
+    code: code || null,
+    // Log only a sanitized response, never credentials.
+    response: body && body.error
+      ? body.error
+      : null,
+  });
+
+  throw new UpstreamError(resp.status, code);
+}
+
     return body;
   } catch (err) {
     if (err instanceof UpstreamError) throw err;
