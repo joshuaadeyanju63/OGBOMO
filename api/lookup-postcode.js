@@ -82,7 +82,9 @@ console.log('POSTCODE API DIAGNOSTIC', {
 let body = null;
 try {
   body = await resp.json();
-} catch (_) {} { /* non-JSON error body */ }
+} catch (_) {
+  // Response body was not JSON.
+}
     
 if (!resp.ok) {
   const code = body && body.error && body.error.code;
@@ -180,6 +182,14 @@ module.exports = async function handler(req, res) {
           encodeURIComponent(parts.canonical),
         apiKey
       );
+
+      console.log('POSTCODE LOOKUP RESPONSE', {
+  topLevelKeys: v ? Object.keys(v) : [],
+  dataKeys: v?.data ? Object.keys(v.data) : [],
+  valid: v?.data?.valid,
+  responseCode: v?.code ?? null,
+  message: v?.message ?? null,
+});
 
       if (v && v.data && typeof v.data.valid === 'boolean') {
         verified = v.data.valid;
