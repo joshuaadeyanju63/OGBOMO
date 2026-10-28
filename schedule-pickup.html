@@ -114,9 +114,9 @@
               <input type="text" id="issue-location" placeholder="Street, market, or nearest landmark" required>
             </div>
             <div class="field">
-              <span>Postcode (optional)</span>
-              <input type="text" id="issue-postcode" placeholder="e.g. EK-01-A03-FK-01" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" aria-describedby="postcode-help postcode-status">
-              <small id="postcode-help" style="display:block; margin-top:0.35rem; color:var(--ink-soft); font-size:0.8rem;">11 characters. Don't know yours? <a href="https://postcode.gov.ng" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Find my postcode</a>. You can still submit without it.</small>
+              <span>Postcode (required)</span>
+              <input type="text" id="issue-postcode" placeholder="e.g. EK-01-A03-FK-01" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" pattern="[A-Za-z]{2}-?[0-9]{2}-?[A-Za-z0-9]{3}-?[A-Za-z]{2}-?[0-9]{2}" title="Enter an 11-character postcode, such as EK-01-A03-FK-01." required aria-describedby="postcode-help postcode-status">
+              <small id="postcode-help" style="display:block; margin-top:0.35rem; color:var(--ink-soft); font-size:0.8rem;">Required — 11 characters. Don't know yours? <a href="https://postcode.gov.ng" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Find my postcode</a>.</small>
               <p id="postcode-status" role="status" aria-live="polite" style="margin:0.35rem 0 0; font-size:0.85rem; min-height:1.2em;"></p>
             </div>
             <div class="field">
@@ -209,7 +209,7 @@
     document.getElementById(id).addEventListener('change', syncPreview);
   });
 
-  // ── Postcode lookup (optional) ────────────────────────────────────────
+  // ── Postcode lookup ───────────────────────────────────────────────────
   // Calls our own /api/lookup-postcode (the NIPOST key stays on the server).
   // The result is a suggestion only; failure never blocks filing a report.
   const pcInput = document.getElementById('issue-postcode');
@@ -225,13 +225,17 @@
 
   function compactPostcode(v) { return String(v || '').toUpperCase().replace(/[\s-]+/g, ''); }
 
+  function formatPostcode(v) {
+    return compactPostcode(v).replace(/^([A-Z]{2})(\d{2})([A-Z0-9]{3})([A-Z]{2})(\d{2})$/, '$1-$2-$3-$4-$5');
+  }
+
   async function lookupPostcode() {
     const compact = compactPostcode(pcInput.value);
     postcodeResult = null;
     if (!compact) { setPcStatus('', ''); return; }
     if (compact.length < 11) { setPcStatus('Keep typing — a postcode has 11 characters.', ''); return; }
     if (!/^[A-Z]{2}\d{2}[A-Z0-9]{3}[A-Z]{2}\d{2}$/.test(compact)) {
-      setPcStatus('That doesn\'t look like a postcode (example: EK-01-A03-FK-01). You can still submit without it.', 'warn');
+      setPcStatus('That doesn\'t look like a postcode (example: EK-01-A03-FK-01).', 'warn');
       return;
     }
     const mySeq = ++pcSeq;
@@ -240,7 +244,7 @@
       const resp = await fetch('/api/lookup-postcode?code=' + encodeURIComponent(compact));
       const data = await resp.json().catch(() => ({}));
       if (mySeq !== pcSeq) return;
-      if (!resp.ok) { setPcStatus((data.error || 'Could not check that postcode.') + ' You can still submit.', 'warn'); return; }
+      if (!resp.ok) { setPcStatus((data.error || 'Could not check that postcode.') + ' Your postcode is still required.', 'warn'); return; }
       postcodeResult = data;
       if (data.ogbomoLga) {
         setPcStatus('✓ ' + data.postcode + ' — ' + data.ogbomoLga + ' LGA. Your report will go to this council.', 'ok');
@@ -250,12 +254,14 @@
       }
     } catch (_) {
       if (mySeq !== pcSeq) return;
-      setPcStatus('Could not reach the postcode check. You can still submit without it.', 'warn');
+      setPcStatus('Could not reach the postcode check. Your postcode is still required; please check its format.', 'warn');
     }
   }
 
   pcInput.addEventListener('input', () => {
     clearTimeout(pcTimer);
+    postcodeResult = null;
+    pcSeq++;
     pcTimer = setTimeout(lookupPostcode, 500);
   });
 
@@ -275,7 +281,7 @@
       userEmail: user ? user.email : 'anonymous@ogbomo.ng',
       userName: user ? user.name : 'Resident',
       lga: (postcodeResult && postcodeResult.ogbomoLga) || (user && user.lga ? user.lga : (LGA_BY_ZONE_CODE[document.getElementById('zone-picker')?.value] || 'Unspecified')),
-      postcode: postcodeResult ? postcodeResult.postcode : null,
+      postcode: postcodeResult ? postcodeResult.postcode : formatPostcode(pcInput.value),
       type: document.getElementById('issue-type').value,
       stream: document.getElementById('issue-stream').value,
       location: document.getElementById('issue-location').value,
