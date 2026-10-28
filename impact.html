@@ -7,6 +7,11 @@
 <meta name="description" content="The research behind Ogbomosoland's waste problem, and the goals this pilot is designed to hit.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="main.css">
 </head>
 <body>
@@ -34,14 +39,58 @@
           <span class="stat-label">Share of Ogbomoso's household waste found to be organic material in a local waste-characterization study — meaning delayed collection actively decomposes, smells, and blocks drains.</span>
         </div>
         <div class="stat-card">
-          <span class="stat-number">5 / 12</span>
-          <span class="stat-label">Local governments and LCDAs that currently coordinate sanitation separately across Ogbomosoland — a structural gap a shared dispatch board is built to bridge.</span>
+          <span class="stat-number">5 + 7</span>
+          <span class="stat-label">Five local governments plus seven local council development areas (LCDAs) — twelve local administrative units across Ogbomosoland. A shared reporting and dispatch view across them is what Ogbomọ́ proposes. <a href="#five-plus-seven" style="color:var(--indigo); text-decoration:underline;">What does this mean?</a></span>
         </div>
         <div class="stat-card">
           <span class="stat-number">42M</span>
           <span class="stat-label">Tonnes of solid waste generated nationally in Nigeria each year, with researchers pointing to weak policy enforcement and low public awareness — not lack of technology — as the core failure points.</span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="five-plus-seven">
+    <div class="container" style="max-width:760px;">
+      <span class="eyebrow">Reading the numbers</span>
+      <h2 style="margin-bottom:1rem;">What does “5 + 7 = 12” mean?</h2>
+      <p style="color:var(--ink-soft); line-height:1.7;">
+        Ogbomosoland is administered by <strong>five Local Government Areas (LGAs)</strong>: Ogbomosho North, Ogbomosho South, Oriire, Ogo-Oluwa and Surulere.
+        On top of those, Oyo State created <strong>seven Local Council Development Areas (LCDAs)</strong> in 2016, smaller administrative units meant to bring government closer to communities.
+        Five LGAs plus seven LCDAs gives <strong>twelve local administrative units</strong>, each with its own office and area of responsibility.
+      </p>
+      <p style="color:var(--ink-soft); line-height:1.7;">
+        Why this matters for waste: a resident needs to know <em>which office</em> a problem belongs to, and an officer needs to see only the reports for their area.
+        Ogbomọ́ starts by routing every report to one of the five LGAs. Adding the LCDAs is a possible later step.
+      </p>
+
+      <table style="width:100%; border-collapse:collapse; margin:1.2rem 0; font-size:0.9rem;">
+        <caption style="text-align:left; font-weight:600; padding-bottom:0.5rem;">The seven LCDAs in the Ogbomoso area</caption>
+        <thead>
+          <tr style="text-align:left; border-bottom:2px solid var(--line);">
+            <th style="padding:0.5rem 0.6rem 0.5rem 0;">LCDA</th>
+            <th style="padding:0.5rem 0;">Headquarters</th>
+          </tr>
+        </thead>
+        <tbody style="color:var(--ink-soft);">
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:0.5rem 0.6rem 0.5rem 0;">Ogbomoso Central</td><td>Oja-Igbo</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:0.5rem 0.6rem 0.5rem 0;">Ogbomoso South-West</td><td>Ajegunle Ibapon</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:0.5rem 0.6rem 0.5rem 0;">Ogo-Oluwa West</td><td>Odo-Oba / Oja-Oba</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:0.5rem 0.6rem 0.5rem 0;">Surulere North</td><td>Orile-Igbon</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:0.5rem 0.6rem 0.5rem 0;">Surulere South</td><td>Oko</td></tr>
+          <tr style="border-bottom:1px solid var(--line);"><td style="padding:0.5rem 0.6rem 0.5rem 0;">Oriire South</td><td>Ahoro-Dada</td></tr>
+          <tr><td style="padding:0.5rem 0.6rem 0.5rem 0;">Oriire North</td><td>Olokoto</td></tr>
+        </tbody>
+      </table>
+
+      <p style="color:var(--ink-soft); font-size:0.88rem; line-height:1.7;">
+        <strong>What we have not verified:</strong> how sanitation duties are split between each LGA and its LCDAs, and whether they coordinate today.
+        Sources also differ slightly on counts (one describes the city as “5 local governments (12 LCDAs)”). We use the seven LCDAs named in an Oyo State House of Assembly report.
+        This will be confirmed with each council before any pilot.
+        Sources:
+        <a href="https://insideoyo.com/constitution-amendment-oyo-assembly-calls-for-review-of-omitted-lcda/" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Inside Oyo</a>,
+        <a href="https://en.wikipedia.org/wiki/Ogbomosho" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Wikipedia: Ogbomosho</a>.
+      </p>
     </div>
   </section>
 
@@ -82,6 +131,7 @@
 
 <div id="site-footer-mount"></div>
 
+<script src="auth.js"></script>
 <script src="components.js"></script>
 </body>
 </html>
