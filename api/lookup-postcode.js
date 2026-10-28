@@ -14,7 +14,8 @@
 //  4. Best-effort free Level-1 validity check (/v1/lookup?level=1).
 //  5. Reports whether the LGA is one of Ogbomosoland's five LGAs.
 //
-// The result is a SUGGESTION for the report form; the resident can override.
+// The lookup supplements the required postcode on the report form; postcode
+// verification does not have to succeed for a correctly formatted report.
 // Format reference: https://docs.postcode.gov.ng/concepts/postcode-format.md
 // ==========================================================================
 
@@ -139,7 +140,7 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.POSTCODE_API_KEY;
   if (!apiKey) {
     console.error('POSTCODE_API_KEY is not set in environment variables.');
-    res.status(500).json({ error: 'Postcode lookup is not available right now. You can still file your report without it.' });
+    res.status(500).json({ error: 'Postcode lookup is not available right now.' });
     return;
   }
 
@@ -222,13 +223,12 @@ module.exports = async function handler(req, res) {
   } catch (err) {
     console.error('Postcode lookup failed:', err.status, err.code); // never log the key
     if (err.status === 429) {
-      res.status(503).json({ error: 'The postcode service is busy. Please try again shortly, or file without it.' });
+      res.status(503).json({ error: 'The postcode service is busy. Please try again shortly.' });
     } else if (err.status === 401 || err.status === 403) {
-      res.status(500).json({ error: 'Postcode lookup is not available right now. You can still file your report without it.' });
+      res.status(500).json({ error: 'Postcode lookup is not available right now.' });
     } else {
-      res.status(502).json({ error: 'Could not reach the postcode service. You can still file your report without it.' });
+      res.status(502).json({ error: 'Could not reach the postcode service.' });
     }
   }
 };
-
 
