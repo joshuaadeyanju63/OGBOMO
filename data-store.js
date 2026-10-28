@@ -87,7 +87,7 @@ const OgbomoStore = (() => {
       userEmail,
       userName: userName || (userEmail ? userEmail.split('@')[0] : 'Resident'),
       lga: lga || 'Unspecified',
-      postcode: postcode || null, // NIPOST postcode (optional), e.g. 'EK-01-A03-FK-01'
+      postcode: postcode || null, // NIPOST postcode, e.g. 'EK-01-A03-FK-01'
       type,
       stream,
       location,
@@ -189,7 +189,7 @@ const OgbomoStore = (() => {
   }
 
   // Assign (or re-assign) a report to a crew. `report` needs id, type, stream,
-  // location, lga (+ optional description). Re-assigning resets status to 'assigned'.
+  // location, lga (+ optional description and postcode). Re-assigning resets status to 'assigned'.
   function assignReport(report, crewId, byName) {
     const crew = getCrew(crewId);
     if (!report || !report.id || !crew) return null;
@@ -204,6 +204,7 @@ const OgbomoStore = (() => {
     Object.assign(job, {
       type: report.type || '', stream: report.stream || '', location: report.location || '',
       lga: report.lga || crew.lga, description: report.description || '',
+      postcode: report.postcode || '',
       crewId, status: 'assigned', issueReason: '', note: '',
       assignedBy: byName || 'Officer', assignedAt: now, updatedAt: now, updatedBy: byName || 'Officer',
     });
