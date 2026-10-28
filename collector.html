@@ -125,13 +125,22 @@ if (AdminAuth.protectCollectorPage()) {
     return r && r.photoDataUrl ? r.photoDataUrl : null;
   }
 
+  function reportFor(reportId) {
+    return OgbomoStore.getAllReports().find(x => x.id === reportId) || null;
+  }
+
   function fmt(iso) {
     try { return new Date(iso).toLocaleString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
     catch (_) { return ''; }
   }
 
   function jobCard(j) {
+    const report = reportFor(j.reportId);
+    const postcode = j.postcode || (report && report.postcode) || '';
     const photo = photoFor(j.reportId);
+    const directions = postcode
+      ? `<a href="https://www.google.com/maps/dir/?api=1&amp;destination=${encodeURIComponent([j.location, postcode, j.lga, 'Nigeria'].filter(Boolean).join(', '))}" target="_blank" rel="noopener noreferrer">Get directions</a>`
+      : '';
     let actions = '';
     if (j.status === 'assigned') {
       actions = `<button class="btn btn-primary" data-act="start" data-id="${E(j.reportId)}">Start job</button>
@@ -161,6 +170,7 @@ if (AdminAuth.protectCollectorPage()) {
           <span class="badge b-${E(j.status)}">${E(STATUS_LABEL[j.status] || j.status)}</span>
         </div>
         <div class="row"><span class="k">Location</span>${E(j.location)}</div>
+        <div class="row"><span class="k">Postcode</span>${postcode ? `${E(postcode)} · ${directions}` : 'Not provided'}</div>
         ${j.stream ? `<div class="row"><span class="k">Waste stream</span>${E(j.stream)}</div>` : ''}
         ${j.description ? `<div class="row"><span class="k">Resident's note</span>${E(j.description)}</div>` : ''}
         ${photo ? `<img class="photo" src="${E(photo)}" alt="Photo from the resident's report" data-act="zoom">` : ''}
