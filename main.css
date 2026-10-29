@@ -224,6 +224,48 @@ section.tint { background: var(--paper-tint); }
   color: var(--ink-soft);
 }
 
+
+/* ---------- Hero slideshow (activates only when photos exist in images/hero/) ---------- */
+.hero { position: relative; overflow: hidden; isolation: isolate; }
+.hero-slides { position: absolute; inset: 0; z-index: -2; display: none; }
+.hero.has-slides .hero-slides { display: block; }
+.hero-slide {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0; transition: opacity 1.4s ease;
+  transform: scale(1);
+}
+.hero-slide.is-active { opacity: 1; animation: heroZoom 9s ease-out forwards; }
+@keyframes heroZoom { from { transform: scale(1); } to { transform: scale(1.07); } }
+.hero.has-slides::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, rgba(31,46,82,.78) 0%, rgba(31,46,82,.68) 55%, rgba(31,46,82,.86) 100%);
+}
+.hero.has-slides { padding: 7rem 0 5.5rem; }
+.hero.has-slides h1, .hero.has-slides p.lede, .hero.has-slides .hero-note { color: #fff; }
+.hero.has-slides p.lede { color: rgba(255,255,255,.92); }
+.hero.has-slides .hero-note { color: rgba(255,255,255,.78); }
+.hero.has-slides .btn-secondary { background: transparent; color: #fff; border-color: rgba(255,255,255,.7); }
+.hero.has-slides .btn-secondary:hover { background: #fff; color: var(--indigo); border-color: #fff; }
+.hero.has-slides .btn-primary { background: var(--gold); color: #1F2E52; }
+.hero.has-slides .btn-primary:hover { background: #D8AB4E; }
+.hero-controls {
+  position: absolute; left: 0; right: 0; bottom: 1.2rem; z-index: 1;
+  display: none; align-items: center; justify-content: center; gap: .6rem;
+}
+.hero.has-slides .hero-controls { display: flex; }
+.hero-dot {
+  width: 10px; height: 10px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 1.5px solid #fff; background: transparent;
+}
+.hero-dot[aria-current="true"] { background: var(--gold); border-color: var(--gold); }
+.hero-dot:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 640px) { .hero.has-slides { padding: 5rem 0 4.5rem; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide { transition: none; }
+  .hero-slide.is-active { animation: none; }
+}
+
 /* ---------- Stat grid ---------- */
 .stat-grid {
   display: grid;
