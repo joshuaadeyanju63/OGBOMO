@@ -25,6 +25,19 @@
   </div>
 
   <main class="admin-main">
+    <div class="admin-panel" style="margin-bottom:1.25rem;">
+      <div class="panel-header">
+        <span class="panel-title">Confirm Drop-offs</span>
+        <span class="badge badge-open" style="font-size:0.7rem;" id="confirm-count"></span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--ink-soft);margin:0 0 0.8rem;">Residents only claim a drop-off. Weigh the material, enter the real weight, then confirm. Points are credited from your weight, not theirs. These are real entries from this browser.</p>
+      <table class="data-table">
+        <thead><tr><th>Resident</th><th>Material</th><th>Claimed</th><th>Place</th><th>Weighed kg</th><th>Action</th></tr></thead>
+        <tbody id="confirm-tbody"></tbody>
+      </table>
+    </div>
+
+    <p style="font-size:0.8rem;background:var(--gold-soft);border:1px solid #E6D3A6;border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:1rem;"><strong>Sample data below.</strong> The totals, queue, earners and transactions on this page are invented for the demo. There are no real users or payouts yet.</p>
     <div class="kpi-grid" id="wallet-kpis"></div>
 
     <div class="admin-grid-2" style="margin-top:1.25rem;">
@@ -61,7 +74,8 @@
   </main>
 </div>
 
-<script src="admin-auth.js"></script>
+<script src="js/admin-auth.js"></script>
+<script src="js/data-store.js"></script>
 <script>
 AdminAuth.protectAdminPage('super_admin');
 document.getElementById('sidebar').innerHTML = buildSidebar('wallet');
@@ -96,6 +110,37 @@ document.getElementById('wallet-kpis').innerHTML = `
   <div class="kpi-card kpi-accent-green"><span class="kpi-label">Total Redeemed</span><span class="kpi-value">₦24,000</span><span class="kpi-change kpi-up">↑ ₦3,000 this week</span></div>
   <div class="kpi-card kpi-accent-red"><span class="kpi-label">Pending Redemptions</span><span class="kpi-value">₦4,200</span><span class="kpi-change kpi-down">3 queued</span></div>
   <div class="kpi-card kpi-accent"><span class="kpi-label">kg Recycled Total</span><span class="kpi-value">1,640</span><span class="kpi-change kpi-up">↑ 84kg this week</span></div>`;
+
+// Confirm drop-offs (real entries from this browser's localStorage)
+function renderConfirm() {
+  const esc = OgbomoStore.esc, list = OgbomoStore.getPendingDropoffs();
+  document.getElementById('confirm-count').textContent = list.length + ' waiting';
+  const tb = document.getElementById('confirm-tbody');
+  tb.innerHTML = list.length ? list.map(d => {
+    const m = OgbomoStore.getMaterial(d.material);
+    return `<tr>
+      <td style="font-weight:500;">${esc(d.email)}</td>
+      <td>${esc(m ? m.label : d.material)}</td>
+      <td class="mono">${d.kg} kg</td>
+      <td style="color:var(--ink-soft);font-size:0.8rem;">${esc(d.place || '—')}</td>
+      <td><input type="number" min="0.1" max="${OgbomoStore.MAX_CLAIM_KG}" step="0.1" value="${d.kg}" id="kg-${esc(d.id)}" style="width:5.5rem;padding:0.3rem;border:1px solid var(--line);border-radius:6px;" aria-label="Weighed kilograms"></td>
+      <td><button class="btn-admin btn-success-admin" data-ok="${esc(d.id)}">Confirm</button>
+          <button class="btn-admin" data-no="${esc(d.id)}" style="margin-left:0.3rem;">Reject</button></td></tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:1.2rem;">Nothing waiting for confirmation</td></tr>';
+}
+document.getElementById('confirm-tbody').addEventListener('click', e => {
+  const who = (AdminAuth.getSession() || {}).name || 'Staff';
+  const ok = e.target.getAttribute('data-ok'), no = e.target.getAttribute('data-no');
+  if (ok) {
+    const kg = document.getElementById('kg-' + ok).value;
+    if (!OgbomoStore.verifyDropoff(ok, who, kg)) alert('Enter a weight between 0.1 and ' + OgbomoStore.MAX_CLAIM_KG + ' kg.');
+    renderConfirm();
+  } else if (no) {
+    const reason = prompt('Why is it not accepted? (shown to the resident)', 'Wrong material or too dirty');
+    if (reason !== null) { OgbomoStore.rejectDropoff(no, who, reason); renderConfirm(); }
+  }
+});
+renderConfirm();
 
 // Redemption queue
 let queue = [...QUEUE];
