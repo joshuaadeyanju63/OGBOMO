@@ -205,7 +205,7 @@ function renderTable() {
       <td style="color:var(--ink-soft);">${E(r.stream)}</td>
       <td>${E(r.location)}</td>
       <td>${r.postcode
-        ? `<span class="mono" style="font-size:0.75rem;">${E(r.postcode)}</span><br><a href="https://postcode.gov.ng/find" target="_blank" rel="noopener noreferrer" aria-label="Look up postcode ${E(r.postcode)}" style="font-size:0.75rem;">Find postcode</a>`
+        ? `<span class="mono" style="font-size:0.75rem;">${E(r.postcode)}</span><br><a href="https://postcode.gov.ng/find?via=postcode" target="_blank" rel="noopener noreferrer" aria-label="Look up postcode ${E(r.postcode)}" style="font-size:0.75rem;">Find postcode</a>`
         : '<span style="color:var(--ink-soft);font-size:0.78rem;">—</span>'}</td>
       <td style="color:var(--ink-soft);font-size:0.8rem;">${E(r.lga)}</td>
       <td style="color:var(--ink-soft);font-size:0.8rem;">${E(r.filed)}</td>
