@@ -37,6 +37,18 @@
   .field span { font-size:0.78rem; color:var(--ink-soft); }
   select, input { font-family:'Work Sans', sans-serif; font-size:0.95rem; padding:0.7rem 0.85rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; }
 
+  .dot-glass { background:#4F7A5B; }
+  .status-pill { font-family:'Space Mono',monospace; font-size:0.68rem; padding:0.15rem 0.5rem; border-radius:999px; white-space:nowrap; }
+  .st-pending { background:#FBF3E2; color:#8A6A3C; }
+  .st-verified { background:#E6F2EA; color:#2F6B45; }
+  .st-rejected { background:#F6E4DF; color:#A6472D; }
+  .history { margin-top:1.4rem; border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:1.3rem; box-shadow:var(--shadow-card); }
+  .hist-row { display:grid; grid-template-columns:1fr auto auto; gap:0.8rem; align-items:center; padding:0.65rem 0; border-bottom:1px solid var(--line); font-size:0.88rem; }
+  .hist-row:last-child { border-bottom:none; }
+  .hist-sub { display:block; font-size:0.74rem; color:var(--ink-soft); }
+  .demo-banner { background:var(--gold-soft); border:1px solid #E6D3A6; border-radius:var(--radius-sm); padding:0.8rem 1rem; font-size:0.85rem; margin-bottom:1.2rem; }
+  .est { font-size:0.82rem; color:var(--ink-soft); min-height:1.2em; }
+  .rate-help { font-size:0.74rem; color:var(--ink-soft); margin-top:0.7rem; line-height:1.5; }
   @media (max-width:800px) { .rewards-layout { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -49,50 +61,55 @@
     <div class="container hero-inner">
       <span class="eyebrow">Èrè · Wallet</span>
       <h1>Your CleanPoints balance</h1>
-      <p class="lede">Earn points for sorted recyclables, and redeem them for cash once you hit the threshold.</p>
+      <p class="lede">Bring sorted recyclables to a drop-off point. Staff weigh them, and your points are added once they confirm the weight.</p>
     </div>
   </section>
 
   <section style="padding-top:0;">
     <div class="container">
+      <div class="demo-banner"><strong>Demo wallet.</strong> No drop-off points are open yet and no money is paid out. Points and cash-outs are simulated, and everything is stored in this browser only.</div>
       <div class="rewards-layout">
         <div class="balance-card">
           <span class="eyebrow" style="color:#C9C4B8;">Your balance</span>
           <span class="balance-number" id="points-balance">0</span>
           <span class="balance-unit">CleanPoints</span>
           <div class="balance-progress"><div class="balance-progress-bar" id="progress-bar"></div></div>
-          <p class="balance-note"><span id="points-remaining">1,000</span> points to your next redemption at <span class="mono">₦1,000</span></p>
-          <button class="btn btn-redeem" id="redeem-btn" disabled>Redeem for cash</button>
+          <p class="balance-note"><span id="points-remaining">1,000</span> points to your next cash-out. 1 point = ₦1, minimum <span class="mono">₦1,000</span>.</p>
+          <button class="btn btn-redeem" id="redeem-btn" disabled>Request cash-out (demo)</button>
         </div>
 
         <div>
           <div class="rate-card">
-            <span class="eyebrow">Example rates <small style="text-transform:none; letter-spacing:0; color:var(--ink-soft); font-family:'Work Sans',sans-serif; font-size:0.72rem;">(illustrative — pending partner pricing)</small></span>
-            <div class="rate-row"><span class="dot dot-plastic"></span><span>Plastic</span><span class="mono">5 pts / kg</span></div>
-            <div class="rate-row"><span class="dot dot-metal"></span><span>Glass &amp; Metal</span><span class="mono">8 pts / kg</span></div>
-            <div class="rate-row"><span class="dot dot-paper"></span><span>Paper &amp; Cardboard</span><span class="mono">3 pts / kg</span></div>
+            <span class="eyebrow">What each kilogram earns <small style="text-transform:none; letter-spacing:0; color:var(--ink-soft); font-family:'Work Sans',sans-serif; font-size:0.72rem;">(illustrative)</small></span>
+            <div id="rate-rows"></div>
+            <p class="rate-help">1 point = ₦1. Only the PET figure has a public price behind it: collectors report being paid ₦250 to ₦620 per kg by recyclers in 2025 (<a href="https://nairametrics.com/2025/07/11/from-trash-to-millions-how-plastic-waste-collectors-in-nigeria-are-cashing-in/" style="color:var(--indigo);">Nairametrics</a>). We show a lower household share to cover transport and sorting. The other rates are placeholders until a buyer agrees prices.</p>
           </div>
 
           <form class="dropoff-form" id="dropoff-form">
-            <span class="eyebrow">Log a drop-off</span>
+            <span class="eyebrow">Tell us what you dropped off</span>
             <div class="field">
               <span>Material</span>
-              <select id="dropoff-material" required>
-                <option value="" disabled selected>Select material</option>
-                <option value="plastic">Plastic</option>
-                <option value="metal">Glass &amp; Metal</option>
-                <option value="paper">Paper &amp; Cardboard</option>
-              </select>
+              <select id="dropoff-material" required></select>
             </div>
             <div class="field">
-              <span>Weight (kg)</span>
-              <input type="number" id="dropoff-kg" min="0.1" step="0.1" placeholder="e.g. 2.5" required>
+              <span>Approximate weight (kg), up to <b id="max-kg">50</b></span>
+              <input type="number" id="dropoff-kg" min="0.1" max="50" step="0.1" placeholder="e.g. 2.5" required>
             </div>
-            <button type="submit" class="btn btn-primary">Add points</button>
+            <div class="field">
+              <span>Where did you drop it off? (optional)</span>
+              <input type="text" id="dropoff-place" maxlength="80" placeholder="e.g. Wazo market point">
+            </div>
+            <p class="est" id="dropoff-est" aria-live="polite"></p>
+            <button type="submit" class="btn btn-primary">Submit for confirmation</button>
+            <p class="est" id="dropoff-msg" role="status" aria-live="polite"></p>
           </form>
         </div>
       </div>
-      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">Your CleanPoints balance is saved to this browser and will still be here next time you visit. A funded pilot would tie this to real hub check-ins and an actual cash-out partner.</p>
+      <div class="history">
+        <span class="eyebrow">Your drop-offs and points</span>
+        <div id="history-list"></div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">Why staff confirm the weight: points should come from material that was really weighed, not from numbers typed into a form. In a funded pilot, a trained attendant at a drop-off point would do this, and cash-outs would go to a bank account or airtime through a payment partner.</p>
     </div>
   </section>
 </main>
@@ -106,46 +123,86 @@
   document.addEventListener('DOMContentLoaded', () => {
     if (!Auth.protectPage()) return;
   });
-  const POINT_RATES = { plastic: 5, metal: 8, paper: 3 };
   const REDEMPTION_THRESHOLD = 1000;
+  const esc = OgbomoStore.esc;
+  const fmt = n => Number(n).toLocaleString('en-US');
 
   function currentEmail() {
     const user = Auth.getUser();
     return user ? user.email : 'anonymous@ogbomo.ng';
   }
 
+  // Rates table + material dropdown come from one list in data-store.js
+  document.getElementById('rate-rows').innerHTML = OgbomoStore.MATERIALS.map(m =>
+    `<div class="rate-row"><span class="dot dot-${m.dot === 'metal' && m.id === 'glass' ? 'glass' : m.dot}"></span><span>${esc(m.label)}</span><span class="mono">${m.rate} pts / kg</span></div>`).join('');
+  document.getElementById('dropoff-material').innerHTML =
+    '<option value="" disabled selected>Select material</option>' +
+    OgbomoStore.MATERIALS.map(m => `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join('');
+  document.getElementById('max-kg').textContent = OgbomoStore.MAX_CLAIM_KG;
+
   function renderBalance() {
     const wallet = OgbomoStore.getWallet(currentEmail());
-    const pointsBalance = wallet.balance;
-    document.getElementById('points-balance').textContent = pointsBalance.toLocaleString('en-US');
-    const remaining = Math.max(REDEMPTION_THRESHOLD - pointsBalance, 0);
-    document.getElementById('points-remaining').textContent = remaining.toLocaleString('en-US');
-    const pct = Math.min((pointsBalance / REDEMPTION_THRESHOLD) * 100, 100);
-    document.getElementById('progress-bar').style.width = pct + '%';
-    document.getElementById('redeem-btn').disabled = pointsBalance < REDEMPTION_THRESHOLD;
+    const bal = wallet.balance;
+    document.getElementById('points-balance').textContent = fmt(bal);
+    document.getElementById('points-remaining').textContent = fmt(Math.max(REDEMPTION_THRESHOLD - bal, 0));
+    document.getElementById('progress-bar').style.width = Math.min((bal / REDEMPTION_THRESHOLD) * 100, 100) + '%';
+    document.getElementById('redeem-btn').disabled = bal < REDEMPTION_THRESHOLD;
   }
-  renderBalance();
+
+  const STATUS = { pending: 'Waiting for staff', verified: 'Confirmed', rejected: 'Not accepted' };
+  function renderHistory() {
+    const email = currentEmail();
+    const drops = OgbomoStore.getDropoffsByUser(email);
+    const cashouts = OgbomoStore.getWallet(email).transactions.filter(t => t.material === 'redemption');
+    const rows = drops.map(d => {
+      const m = OgbomoStore.getMaterial(d.material);
+      const kg = d.status === 'verified' ? d.confirmedKg : d.kg;
+      const pts = d.status === 'verified' ? '+' + fmt(d.points) + ' pts' : '—';
+      const sub = d.status === 'verified' ? 'Confirmed by ' + esc(d.verifiedBy)
+                : d.status === 'rejected' ? 'Reason: ' + esc(d.reason || 'not given')
+                : 'You said ' + kg + ' kg' + (d.place ? ' at ' + esc(d.place) : '');
+      return { t: d.createdAt, html: `<div class="hist-row"><span>${esc(m ? m.label : d.material)} · ${kg} kg<span class="hist-sub">${new Date(d.createdAt).toLocaleDateString('en-GB')} · ${sub}</span></span><span class="status-pill st-${esc(d.status)}">${STATUS[d.status]}</span><span class="mono">${pts}</span></div>` };
+    }).concat(cashouts.map(c => ({ t: c.date, html: `<div class="hist-row"><span>Cash-out request (demo)<span class="hist-sub">${new Date(c.date).toLocaleDateString('en-GB')}</span></span><span class="status-pill st-pending">Demo</span><span class="mono">−${fmt(-c.points)} pts</span></div>` })));
+    rows.sort((a, b) => new Date(b.t) - new Date(a.t));
+    document.getElementById('history-list').innerHTML = rows.length
+      ? rows.map(r => r.html).join('')
+      : '<p class="est" style="margin-top:0.8rem;">Nothing yet. Choose a material and weight above to start.</p>';
+  }
+
+  function renderEstimate() {
+    const m = OgbomoStore.getMaterial(document.getElementById('dropoff-material').value);
+    const kg = parseFloat(document.getElementById('dropoff-kg').value);
+    document.getElementById('dropoff-est').textContent = (m && kg > 0)
+      ? `If staff confirm ${kg} kg, that is about ${fmt(Math.round(m.rate * kg))} points (₦${fmt(Math.round(m.rate * kg))}).` : '';
+  }
+  document.getElementById('dropoff-material').addEventListener('change', renderEstimate);
+  document.getElementById('dropoff-kg').addEventListener('input', renderEstimate);
 
   document.getElementById('dropoff-form').addEventListener('submit', e => {
     e.preventDefault();
-    const material = document.getElementById('dropoff-material').value;
-    const kg = parseFloat(document.getElementById('dropoff-kg').value);
-    if (!material || !kg || kg <= 0) return;
-    const points = Math.round(POINT_RATES[material] * kg);
-    OgbomoStore.addPoints(currentEmail(), { material, kg, points });
-    renderBalance();
-    e.target.reset();
+    const msg = document.getElementById('dropoff-msg');
+    const d = OgbomoStore.submitDropoff(currentEmail(), {
+      material: document.getElementById('dropoff-material').value,
+      kg: parseFloat(document.getElementById('dropoff-kg').value),
+      place: document.getElementById('dropoff-place').value.trim(),
+    });
+    if (!d) { msg.textContent = 'Please choose a material and a weight between 0.1 and ' + OgbomoStore.MAX_CLAIM_KG + ' kg.'; return; }
+    e.target.reset(); renderEstimate();
+    msg.textContent = 'Sent. Your points are added after staff confirm the weight.';
+    renderHistory();
   });
 
   document.getElementById('redeem-btn').addEventListener('click', () => {
     const wallet = OgbomoStore.getWallet(currentEmail());
     if (wallet.balance < REDEMPTION_THRESHOLD) return;
     OgbomoStore.redeemPoints(currentEmail(), REDEMPTION_THRESHOLD);
-    renderBalance();
+    renderBalance(); renderHistory();
     const btn = document.getElementById('redeem-btn');
-    btn.textContent = 'Redeemed ✓ (demo only)';
-    setTimeout(() => { btn.textContent = 'Redeem for cash'; }, 2500);
+    btn.textContent = 'Requested ✓ (demo only)';
+    setTimeout(() => { btn.textContent = 'Request cash-out (demo)'; }, 2500);
   });
+
+  renderBalance(); renderHistory();
 </script>
 </body>
 </html>
