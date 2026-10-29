@@ -87,7 +87,7 @@ const OgbomoStore = (() => {
       userEmail,
       userName: userName || (userEmail ? userEmail.split('@')[0] : 'Resident'),
       lga: lga || 'Unspecified',
-      postcode: postcode || null, // NIPOST postcode, e.g. 'EK-01-A03-FK-01'
+      postcode: postcode || null, // NIPOST postcode (optional), e.g. 'EK-01-A03-FK-01'
       type,
       stream,
       location,
@@ -149,6 +149,69 @@ const OgbomoStore = (() => {
     return wallets[email];
   }
 
+  // ── Drop-offs: claimed by a resident, confirmed by staff ────────────────
+  // A resident can only CLAIM a drop-off. Points are credited when staff weigh
+  // and confirm it (see admin-wallet.html). DEMO: this runs in the browser, so
+  // a real system needs a server to enforce it (docs/05-data-model.md).
+  const DROPOFFS_KEY = 'ogbomo_dropoffs';
+  const MAX_CLAIM_KG = 50;
+  // 1 point = ₦1. ILLUSTRATIVE rates, not buyer quotes. Only PET has a public
+  // price anchor: collectors report ₦250–₦620/kg from buyers (Nairametrics, 2025),
+  // so a household share of ₦200/kg is a plausible starting point. The rest are
+  // placeholders until a real buyer agrees prices.
+  const MATERIALS = [
+    { id: 'pet',     label: 'PET plastic bottles',   rate: 200, dot: 'plastic', anchored: true },
+    { id: 'sachet',  label: 'Pure water sachets',    rate: 50,  dot: 'plastic' },
+    { id: 'can',     label: 'Drink cans (metal)',    rate: 150, dot: 'metal' },
+    { id: 'glass',   label: 'Glass bottles',         rate: 20,  dot: 'metal' },
+    { id: 'paper',   label: 'Paper & cardboard',     rate: 40,  dot: 'paper' },
+  ];
+  function getMaterial(id) { return MATERIALS.find(m => m.id === id) || null; }
+  function getAllDropoffs() { return readJSON(DROPOFFS_KEY, []); }
+  function getDropoffsByUser(email) { return getAllDropoffs().filter(d => d.email === email); }
+  function getPendingDropoffs() { return getAllDropoffs().filter(d => d.status === 'pending'); }
+
+  function submitDropoff(email, { material, kg, place }) {
+    const m = getMaterial(material);
+    const w = Math.round(Number(kg) * 10) / 10;
+    if (!m || !(w > 0) || w > MAX_CLAIM_KG) return null;
+    const list = getAllDropoffs();
+    const d = {
+      id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      email, material, kg: w, place: String(place || '').slice(0, 80),
+      createdAt: new Date().toISOString(), status: 'pending',
+    };
+    list.unshift(d);
+    writeJSON(DROPOFFS_KEY, list);
+    return d;
+  }
+
+  // Staff confirm the weighed amount; points are computed from the confirmed kg.
+  function verifyDropoff(id, staffName, confirmedKg) {
+    const list = getAllDropoffs();
+    const d = list.find(x => x.id === id);
+    const m = d && getMaterial(d.material);
+    if (!d || d.status !== 'pending' || !m) return null;
+    const kg = Math.round(Number(confirmedKg) * 10) / 10;
+    if (!(kg > 0) || kg > MAX_CLAIM_KG) return null;
+    const points = Math.round(m.rate * kg);
+    d.status = 'verified'; d.confirmedKg = kg; d.points = points;
+    d.verifiedBy = staffName; d.verifiedAt = new Date().toISOString();
+    writeJSON(DROPOFFS_KEY, list);
+    addPoints(d.email, { material: m.label, kg, points, hub: 'Confirmed by ' + staffName });
+    return d;
+  }
+
+  function rejectDropoff(id, staffName, reason) {
+    const list = getAllDropoffs();
+    const d = list.find(x => x.id === id);
+    if (!d || d.status !== 'pending') return null;
+    d.status = 'rejected'; d.verifiedBy = staffName; d.reason = String(reason || '').slice(0, 120);
+    d.verifiedAt = new Date().toISOString();
+    writeJSON(DROPOFFS_KEY, list);
+    return d;
+  }
+
   // ── Crews & job assignments ──────────────────────────────────────────────
   // DEMO: crews are a fixed list; assignments live in this browser only, so a
   // collector sees jobs assigned from the same browser. A real deployment
@@ -189,7 +252,7 @@ const OgbomoStore = (() => {
   }
 
   // Assign (or re-assign) a report to a crew. `report` needs id, type, stream,
-  // location, lga (+ optional description and postcode). Re-assigning resets status to 'assigned'.
+  // location, lga (+ optional description). Re-assigning resets status to 'assigned'.
   function assignReport(report, crewId, byName) {
     const crew = getCrew(crewId);
     if (!report || !report.id || !crew) return null;
@@ -204,7 +267,6 @@ const OgbomoStore = (() => {
     Object.assign(job, {
       type: report.type || '', stream: report.stream || '', location: report.location || '',
       lga: report.lga || crew.lga, description: report.description || '',
-      postcode: report.postcode || '',
       crewId, status: 'assigned', issueReason: '', note: '',
       assignedBy: byName || 'Officer', assignedAt: now, updatedAt: now, updatedBy: byName || 'Officer',
     });
@@ -244,6 +306,8 @@ const OgbomoStore = (() => {
     getAllReports, getReportsByUser, getReportsByLGA, createReport, updateReportStatus,
     // wallet
     getWallet, addPoints, redeemPoints,
+    MATERIALS, MAX_CLAIM_KG, getMaterial, getAllDropoffs, getDropoffsByUser,
+    getPendingDropoffs, submitDropoff, verifyDropoff, rejectDropoff,
     // crews & jobs (demo)
     CREWS, getCrews, getCrew, getAllJobs, getJobsByCrew, getJobForReport,
     assignReport, unassignReport, updateJobStatus,
