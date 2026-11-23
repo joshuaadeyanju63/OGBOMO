@@ -251,6 +251,7 @@ function buildSidebar(active) {
     <div class="sidebar-section-label">Operations</div>
     ${link('reports', 'admin-reports.html', '🎫', 'Reports', '<span class="notif-dot"></span>')}
     ${link('routes', 'admin-routes.html', '🚛', 'Routes & Crews')}
+    ${role !== 'collector' ? link('community', 'admin-community.html', '🤝', 'Community Interest') : ''}
     ${teamAllowed ? link('team', 'admin-team.html', '🧑‍🤝‍🧑', 'Team & Workload') : ''}
     ${s ? `<div class="sidebar-section-label">Finance</div>
     ${link('wallet', 'admin-wallet.html', '💰', 'CleanPoints & Wallet')}
