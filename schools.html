@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schools sorting competition — Ogbomọ́</title>
+<meta name="description" content="A proposed school sorting competition for Ogbomosoland: classes sort recyclables, staff weigh them, and the best class wins a prize.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon-32x32_jelqdg.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/apple-touch-icon_ef4d8v.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="main.css">
 
+<style>
+  .hub-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:1rem; }
+  .hub-card { border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow-card); padding:1.2rem; display:flex; flex-direction:column; gap:0.6rem; }
+  .hub-name { font-family:'Unbounded', sans-serif; font-size:0.95rem; }
+  .hub-zone { font-family:'Space Mono', monospace; font-size:0.72rem; color:var(--ink-soft); }
+  .hub-accepts { display:flex; gap:0.4rem; flex-wrap:wrap; }
+  .hub-tag { font-family:'Space Mono', monospace; font-size:0.68rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; background:var(--paper-tint); color:var(--ink-soft); }
+  .hub-status { align-self:flex-start; font-family:'Space Mono', monospace; font-size:0.66rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; }
+  .hub-status-proposed { background:var(--gold-soft); color:#93690F; }
+  .hub-status-discussion { background:var(--indigo-soft); color:var(--indigo); }
+  .suggest { margin-top:2.2rem; border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:1.5rem; box-shadow:var(--shadow-card); max-width:640px; margin-left:auto; margin-right:auto; }
+  .suggest h2 { font-size:1.15rem; margin:0 0 0.4rem; }
+  .suggest .field { display:flex; flex-direction:column; gap:0.35rem; margin-top:0.85rem; font-size:0.88rem; font-weight:500; }
+  .suggest input[type=text], .suggest select, .suggest textarea { font-family:'Work Sans',sans-serif; font-size:0.95rem; padding:0.65rem 0.8rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; }
+  .suggest .checks { display:flex; flex-wrap:wrap; gap:0.4rem 1.1rem; font-weight:400; }
+  .suggest .checks label { display:flex; align-items:center; gap:0.35rem; }
+  .suggest .note { font-size:0.8rem; color:var(--ink-soft); margin-top:0.8rem; }
+  .suggest .ok { color:#2F6B45; font-size:0.9rem; margin-top:0.8rem; min-height:1.2em; }
+</style>
+</head>
+<body>
+
+<div id="site-header-mount"></div>
+
+<main>
+  <section class="hero" style="padding-bottom:1.5rem;">
+    <div class="container hero-inner">
+      <span class="eyebrow">Ilé-ìwé · Schools</span>
+      <h1>Schools sorting competition</h1>
+      <p class="lede">A proposed pilot: classes compete to sort the most clean recyclables, and learn why it matters.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <div class="demo-note" style="max-width:640px;margin:0 auto 1rem;background:var(--gold-soft);border:1px solid #E6D3A6;border-radius:8px;padding:0.8rem 1rem;font-size:0.85rem;"><strong>Idea stage.</strong> We have not run a school competition yet. Tell us if your school would like to try one in a pilot.</div>
+      <div class="suggest" style="margin-top:0;">
+        <h2>How the competition would work</h2>
+        <ol style="color:var(--ink-soft);line-height:1.8;padding-left:1.2rem;margin:0.5rem 0 0;">
+          <li>Each class sorts plastic bottles, pure water sachets, cans, glass and paper at school for a term.</li>
+          <li>Staff weigh each class's material at a drop-off point and confirm the kilograms.</li>
+          <li>The class with the most clean, sorted material wins a prize chosen with the school, such as books, sports kit or a tree-planting day.</li>
+          <li>Sales of the material fund the prize and the next round. Pupils learn why sorting matters through our <a href="education.html" style="color:var(--indigo);">education guides</a>.</li>
+        </ol>
+        <p class="note">The idea is based on school programmes run by <a href="https://www.terracycle.com" style="color:var(--indigo);" target="_blank" rel="noopener">TerraCycle</a> and Nigerian recyclers such as RecyclePoints. Prizes and prices are not decided.</p>
+      </div>
+      <form class="suggest" id="school-form">
+        <h2>Register your school's interest</h2>
+        <div class="field"><label for="f-name">School name</label><input type="text" id="f-name" maxlength="80" required></div>
+        <div class="field"><label for="f-lga">Local government</label>
+          <select id="f-lga" required><option value="" disabled selected>Select</option></select></div>
+        <div class="field"><label for="f-role">Your role</label>
+          <select id="f-role" required><option value="" disabled selected>Select</option><option>Teacher</option><option>Principal or head teacher</option><option>Parent or PTA member</option><option>Student club leader</option><option>Other</option></select></div>
+        <div class="field"><label for="f-size">Roughly how many pupils?</label>
+          <select id="f-size"><option value="">Not sure</option><option>Under 100</option><option>100 to 300</option><option>300 to 600</option><option>Over 600</option></select></div>
+        <div class="field"><label for="f-contact">Phone or email for follow-up</label><input type="text" id="f-contact" maxlength="60" required autocomplete="off"></div>
+        <div class="field"><label style="display:flex;gap:0.5rem;font-weight:400;align-items:flex-start;"><input type="checkbox" id="f-consent" required style="margin-top:0.2rem;"> <span>I agree that Ogbomọ́ may contact me about this. I understand it is a prototype and nothing is promised.</span></label></div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Send</button>
+        <p class="ok" id="f-ok" role="status" aria-live="polite"></p>
+        <p class="note">Right now this is saved on this device only and is not yet sent anywhere. Do not enter anything you would not want kept.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer-mount"></div>
+
+<script src="auth.js"></script>
+<script src="data-store.js"></script>
+<script src="components.js"></script>
+<script>
+  document.getElementById('f-lga').innerHTML += OgbomoStore.LGAS.map(l => `<option>${OgbomoStore.esc(l)}</option>`).join('');
+  document.getElementById('school-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const entry = OgbomoStore.addCommunityEntry('school', {
+      name: document.getElementById('f-name').value,
+      lga: document.getElementById('f-lga').value,
+      role: document.getElementById('f-role').value,
+      size: document.getElementById('f-size').value,
+      contact: document.getElementById('f-contact').value,
+    });
+    const ok = document.getElementById('f-ok');
+    if (!entry) { ok.style.color = '#A6472D'; ok.textContent = 'Please fill in every required box.'; return; }
+    ok.style.color = '#2F6B45'; ok.textContent = 'Thank you. Your interest is saved on this device.';
+    e.target.reset();
+  });
+</script>
+</body>
+</html>
