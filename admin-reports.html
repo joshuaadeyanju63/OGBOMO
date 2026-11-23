@@ -62,7 +62,6 @@
             <th>Type</th>
             <th>Stream</th>
             <th>Location</th>
-            <th>Postcode</th>
             <th>LGA</th>
             <th>Filed</th>
             <th>Assigned crew</th>
@@ -119,12 +118,12 @@ const realReports = OgbomoStore.getAllReports().map(r => ({
   type: r.type,
   stream: r.stream,
   location: r.location,
-  postcode: r.postcode || '',
   description: r.description || '',
   lga: r.lga,
   filed: new Date(r.filedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }),
   status: r.status,
   photoDataUrl: r.photoDataUrl,
+  afterRain: r.afterRain === true,
 }));
 
 const REPORTS = [...realReports, ...SEED_REPORTS];
@@ -182,7 +181,7 @@ function renderTable() {
   const emptyEl = document.getElementById('empty-state');
 
   const filtered = reportData.filter(r => {
-    const matchSearch = !search || r.id.toLowerCase().includes(search) || r.type.toLowerCase().includes(search) || r.location.toLowerCase().includes(search) || (r.postcode || '').toLowerCase().includes(search);
+    const matchSearch = !search || r.id.toLowerCase().includes(search) || r.type.toLowerCase().includes(search) || r.location.toLowerCase().includes(search);
     const matchStatus = !filterStatus || r.status === filterStatus;
     const matchLGA = !filterLGA || r.lga === filterLGA;
     return matchSearch && matchStatus && matchLGA;
@@ -201,12 +200,9 @@ function renderTable() {
       <td>${r.photoDataUrl
         ? `<img src="${E(r.photoDataUrl)}" alt="Report photo" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="openLightbox(this.src)">`
         : `<span style="color:var(--ink-soft);font-size:0.78rem;">—</span>`}</td>
-      <td style="font-weight:500;">${E(r.type)}</td>
+      <td style="font-weight:500;">${E(r.type)}${r.afterRain ? ' <span class="mono" style="font-size:0.62rem;background:#E3EEF3;color:#2B6E7A;border-radius:999px;padding:0.1rem 0.4rem;">after rain</span>' : ''}</td>
       <td style="color:var(--ink-soft);">${E(r.stream)}</td>
       <td>${E(r.location)}</td>
-      <td>${r.postcode
-        ? `<span class="mono" style="font-size:0.75rem;">${E(r.postcode)}</span><br><a href="https://postcode.gov.ng/find?via=postcode" target="_blank" rel="noopener noreferrer" aria-label="Look up postcode ${E(r.postcode)}" style="font-size:0.75rem;">Find postcode</a>`
-        : '<span style="color:var(--ink-soft);font-size:0.78rem;">—</span>'}</td>
       <td style="color:var(--ink-soft);font-size:0.8rem;">${E(r.lga)}</td>
       <td style="color:var(--ink-soft);font-size:0.8rem;">${E(r.filed)}</td>
       <td>${crewCell(r)}</td>
