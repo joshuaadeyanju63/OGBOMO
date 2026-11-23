@@ -62,6 +62,63 @@ const OgbomoStore = (() => {
     });
   }
 
+  // ── Photo preparation for the AI sorter ──────────────────────────────────
+  // Phone photos are often 4–12 MB. Vercel rejects request bodies over about
+  // 4.5 MB, and a huge upload is slow on weak networks. This shrinks any
+  // photo so the sorter can still see the item: longest side 1024 px (more
+  // detail than the 640 px used for stored report photos), JPEG, and the
+  // result is guaranteed to stay under maxBytes by lowering quality, then
+  // size, until it fits. Returns a data URL, or null if the file cannot be
+  // decoded (for example an unsupported format).
+
+  async function compressForAI(file, opts) {
+    if (!file) return null;
+    const o = Object.assign({ maxSide: 1024, maxBytes: 1500000 }, opts || {});
+    let bitmap = null, objectUrl = null, source, w, h;
+    try {
+      if (typeof createImageBitmap === 'function') {
+        try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+        catch (_) { bitmap = null; }
+      }
+      if (bitmap) {
+        source = bitmap; w = bitmap.width; h = bitmap.height;
+      } else {
+        objectUrl = URL.createObjectURL(file);
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = objectUrl;
+        });
+        source = img; w = img.naturalWidth; h = img.naturalHeight;
+      }
+      if (!w || !h) return null;
+
+      let side = o.maxSide, dataUrl = null;
+      for (let step = 0; step < 4; step++) {
+        const scale = Math.min(1, side / Math.max(w, h));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(w * scale));
+        canvas.height = Math.max(1, Math.round(h * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';               // PNGs with transparency
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        for (const q of [0.82, 0.7, 0.58, 0.46]) {
+          dataUrl = canvas.toDataURL('image/jpeg', q);
+          if (dataUrl.length <= o.maxBytes) return dataUrl;
+        }
+        side = Math.round(side * 0.75);
+      }
+      return dataUrl;
+    } catch (_) {
+      return null;
+    } finally {
+      if (bitmap && bitmap.close) bitmap.close();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    }
+  }
+
   // ── Reports ──────────────────────────────────────────────────────────────
 
   function getAllReports() {
@@ -78,7 +135,7 @@ const OgbomoStore = (() => {
 
   // Creates a report. `photoFile` is an optional File object from an
   // <input type="file">; it will be compressed before saving.
-  async function createReport({ userEmail, userName, lga, type, stream, location, description, photoFile, postcode }) {
+  async function createReport({ userEmail, userName, lga, type, stream, location, description, photoFile, postcode, afterRain }) {
     const photoDataUrl = await compressPhoto(photoFile);
     const reports = getAllReports();
     const id = 'OGB-' + (5000 + reports.length + Math.floor(Math.random() * 100));
@@ -87,6 +144,7 @@ const OgbomoStore = (() => {
       userEmail,
       userName: userName || (userEmail ? userEmail.split('@')[0] : 'Resident'),
       lga: lga || 'Unspecified',
+      afterRain: afterRain === true, // true if the resident says it rained in the last 24 hours
       postcode: postcode || null, // NIPOST postcode (optional), e.g. 'EK-01-A03-FK-01'
       type,
       stream,
@@ -212,6 +270,48 @@ const OgbomoStore = (() => {
     return d;
   }
 
+  // ── Community entries: hub suggestions, school sign-ups, waste-picker sign-ups ──
+  // DEMO: stored in this browser only, so staff see them only on the same device.
+  // A real pilot needs the shared database (docs/05-data-model.md). Entries hold
+  // personal details (names, phone numbers), so keep them minimal.
+  const COMMUNITY_KEY = 'ogbomo_community';
+  const KINDS = ['hub_suggestion', 'school', 'picker'];
+  const LGAS = ['Ogbomosho North', 'Ogbomosho South', 'Oriire', 'Ogo-Oluwa', 'Surulere'];
+  const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+
+  function getCommunityEntries(kind) {
+    const all = readJSON(COMMUNITY_KEY, []);
+    return kind ? all.filter(e => e.kind === kind) : all;
+  }
+
+  function addCommunityEntry(kind, fields) {
+    if (!KINDS.includes(kind)) return null;
+    const f = {};
+    Object.keys(fields || {}).forEach(k => {
+      const v = fields[k];
+      f[k] = Array.isArray(v) ? v.slice(0, 10).map(x => clip(x, 60)) : clip(v, 300);
+    });
+    if (f.lga && !LGAS.includes(f.lga)) return null;
+    const all = readJSON(COMMUNITY_KEY, []);
+    const entry = {
+      id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      kind, fields: f, status: 'new', createdAt: new Date().toISOString(),
+    };
+    all.unshift(entry);
+    writeJSON(COMMUNITY_KEY, all);
+    return entry;
+  }
+
+  function setCommunityStatus(id, status) {
+    if (!['new', 'contacted', 'accepted', 'declined'].includes(status)) return null;
+    const all = readJSON(COMMUNITY_KEY, []);
+    const e = all.find(x => x.id === id);
+    if (!e) return null;
+    e.status = status;
+    writeJSON(COMMUNITY_KEY, all);
+    return e;
+  }
+
   // ── Crews & job assignments ──────────────────────────────────────────────
   // DEMO: crews are a fixed list; assignments live in this browser only, so a
   // collector sees jobs assigned from the same browser. A real deployment
@@ -308,12 +408,13 @@ const OgbomoStore = (() => {
     getWallet, addPoints, redeemPoints,
     MATERIALS, MAX_CLAIM_KG, getMaterial, getAllDropoffs, getDropoffsByUser,
     getPendingDropoffs, submitDropoff, verifyDropoff, rejectDropoff,
+    LGAS, getCommunityEntries, addCommunityEntry, setCommunityStatus,
     // crews & jobs (demo)
     CREWS, getCrews, getCrew, getAllJobs, getJobsByCrew, getJobForReport,
     assignReport, unassignReport, updateJobStatus,
     // helpers
     esc,
     // exposed for advanced/debug use
-    compressPhoto,
+    compressPhoto, compressForAI,
   };
 })();
