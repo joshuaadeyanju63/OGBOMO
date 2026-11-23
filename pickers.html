@@ -1,1 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waste pickers — Ogbomọ́</title>
+<meta name="description" content="Cash-by-weight sign-up for people who collect recyclables in Ogbomosoland, for a future pilot.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon-32x32_jelqdg.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/apple-touch-icon_ef4d8v.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="main.css">
 
+<style>
+  .hub-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:1rem; }
+  .hub-card { border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadow-card); padding:1.2rem; display:flex; flex-direction:column; gap:0.6rem; }
+  .hub-name { font-family:'Unbounded', sans-serif; font-size:0.95rem; }
+  .hub-zone { font-family:'Space Mono', monospace; font-size:0.72rem; color:var(--ink-soft); }
+  .hub-accepts { display:flex; gap:0.4rem; flex-wrap:wrap; }
+  .hub-tag { font-family:'Space Mono', monospace; font-size:0.68rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; background:var(--paper-tint); color:var(--ink-soft); }
+  .hub-status { align-self:flex-start; font-family:'Space Mono', monospace; font-size:0.66rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; }
+  .hub-status-proposed { background:var(--gold-soft); color:#93690F; }
+  .hub-status-discussion { background:var(--indigo-soft); color:var(--indigo); }
+  .suggest { margin-top:2.2rem; border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:1.5rem; box-shadow:var(--shadow-card); max-width:640px; margin-left:auto; margin-right:auto; }
+  .suggest h2 { font-size:1.15rem; margin:0 0 0.4rem; }
+  .suggest .field { display:flex; flex-direction:column; gap:0.35rem; margin-top:0.85rem; font-size:0.88rem; font-weight:500; }
+  .suggest input[type=text], .suggest select, .suggest textarea { font-family:'Work Sans',sans-serif; font-size:0.95rem; padding:0.65rem 0.8rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; }
+  .suggest .checks { display:flex; flex-wrap:wrap; gap:0.4rem 1.1rem; font-weight:400; }
+  .suggest .checks label { display:flex; align-items:center; gap:0.35rem; }
+  .suggest .note { font-size:0.8rem; color:var(--ink-soft); margin-top:0.8rem; }
+  .suggest .ok { color:#2F6B45; font-size:0.9rem; margin-top:0.8rem; min-height:1.2em; }
+</style>
+</head>
+<body>
+
+<div id="site-header-mount"></div>
+
+<main>
+  <section class="hero" style="padding-bottom:1.5rem;">
+    <div class="container hero-inner">
+      <span class="eyebrow">Olùgbà · Collectors</span>
+      <h1>For people who collect recyclables</h1>
+      <p class="lede">Tell us if you would join a pilot that pays cash by weight, with the weight confirmed in front of you.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <div class="demo-note" style="max-width:640px;margin:0 auto 1rem;background:var(--gold-soft);border:1px solid #E6D3A6;border-radius:8px;padding:0.8rem 1rem;font-size:0.85rem;"><strong>Idea stage.</strong> We have no buyer and no drop-off point yet, so we cannot pay anyone today. This list tells us who would join a pilot.</div>
+      <div class="suggest" style="margin-top:0;">
+        <h2>For people who collect recyclables</h2>
+        <p class="note" style="margin-top:0;">If you collect bottles, sachets, cans, glass or paper for a living, a pilot would pay you <strong>cash by weight</strong> at a drop-off point, with the weight written down in front of you. This is the model RecyclePoints uses for waste pickers. Prices would come from a real buyer and we would show them to you before you start.</p>
+        <ul style="color:var(--ink-soft);line-height:1.8;padding-left:1.2rem;margin:0.5rem 0 0;">
+          <li>Collectors report being paid ₦250 to ₦620 per kg for clean PET by recyclers in 2025 (<a href="https://nairametrics.com/2025/07/11/from-trash-to-millions-how-plastic-waste-collectors-in-nigeria-are-cashing-in/" style="color:var(--indigo);">Nairametrics</a>). Transport and rejected dirty bottles cut into that, so we want to understand your costs.</li>
+          <li>We cannot promise a price yet.</li>
+        </ul>
+      </div>
+      <form class="suggest" id="picker-form">
+        <h2>Tell us you are interested</h2>
+        <div class="field"><label for="f-name">Your name (first name is enough)</label><input type="text" id="f-name" maxlength="60" required></div>
+        <div class="field"><label for="f-lga">Local government</label>
+          <select id="f-lga" required><option value="" disabled selected>Select</option></select></div>
+        <div class="field"><label for="f-area">Which area or market do you collect in?</label><input type="text" id="f-area" maxlength="80" required placeholder="e.g. Sabo, Orita-Naira"></div>
+        <div class="field"><span>What do you collect?</span><div class="checks" id="f-mats"></div></div>
+        <div class="field"><label for="f-kg">Roughly how many kg a week?</label>
+          <select id="f-kg"><option value="">Not sure</option><option>Under 20 kg</option><option>20 to 100 kg</option><option>100 to 500 kg</option><option>Over 500 kg</option></select></div>
+        <div class="field"><label for="f-contact">Phone number for follow-up</label><input type="text" id="f-contact" maxlength="40" required autocomplete="off" inputmode="tel"></div>
+        <div class="field"><label style="display:flex;gap:0.5rem;font-weight:400;align-items:flex-start;"><input type="checkbox" id="f-consent" required style="margin-top:0.2rem;"> <span>I agree that Ogbomọ́ may contact me about this. I understand it is a prototype and nothing is promised.</span></label></div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Send</button>
+        <p class="ok" id="f-ok" role="status" aria-live="polite"></p>
+        <p class="note">Right now this is saved on this device only and is not yet sent anywhere. Give a phone number only if you are happy to be called once a pilot exists.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer-mount"></div>
+
+<script src="auth.js"></script>
+<script src="data-store.js"></script>
+<script src="components.js"></script>
+<script>
+  document.getElementById('f-lga').innerHTML += OgbomoStore.LGAS.map(l => `<option>${OgbomoStore.esc(l)}</option>`).join('');
+  document.getElementById('f-mats').innerHTML = OgbomoStore.MATERIALS.map(m =>
+    `<label><input type="checkbox" value="${OgbomoStore.esc(m.label)}"> ${OgbomoStore.esc(m.label)}</label>`).join('');
+  document.getElementById('picker-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const entry = OgbomoStore.addCommunityEntry('picker', {
+      name: document.getElementById('f-name').value,
+      lga: document.getElementById('f-lga').value,
+      area: document.getElementById('f-area').value,
+      materials: [...document.querySelectorAll('#f-mats input:checked')].map(i => i.value),
+      weekly: document.getElementById('f-kg').value,
+      contact: document.getElementById('f-contact').value,
+    });
+    const ok = document.getElementById('f-ok');
+    if (!entry) { ok.style.color = '#A6472D'; ok.textContent = 'Please fill in every required box.'; return; }
+    ok.style.color = '#2F6B45'; ok.textContent = 'Thank you. Your interest is saved on this device.';
+    e.target.reset();
+  });
+</script>
+</body>
+</html>
