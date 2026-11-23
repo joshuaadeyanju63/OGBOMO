@@ -84,6 +84,8 @@ function renderFooter() {
             <a href="schedule-pickup.html">Schedule Pickup</a>
             <a href="wallet.html">Wallet</a>
             <a href="hubs.html">Hub Locator</a>
+            <a href="schools.html">For Schools</a>
+            <a href="pickers.html">For Waste Pickers</a>
           </div>
           <div class="footer-col">
             <h4>Learn</h4>
