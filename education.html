@@ -14,7 +14,6 @@
 <link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="main.css">
 <style>
-  .education-logo { display:block; width:clamp(7rem, 18vw, 10rem); aspect-ratio:1; object-fit:cover; margin:0 auto 1.25rem; border-radius:1rem; box-shadow:var(--shadow-card); }
   .bin-card { border-radius: var(--radius); padding: 1.4rem; color: #fff; display:flex; flex-direction:column; gap:0.5rem; }
   .bin-card h3 { color: #fff; }
   .bin-card p { font-size: 0.88rem; opacity: 0.92; }
@@ -109,9 +108,8 @@
 
 <main>
 
-  <section class="hero" style="padding-bottom:2.5rem;">
+  <section class="hero" data-slides="images/education/slide-1.jpg,images/education/slide-2.jpg,images/education/slide-3.jpg" style="padding-bottom:2.5rem;">
     <div class="container hero-inner">
-      <img class="education-logo" src="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793263937/ChatGPT_Image_Jul_9__2026__04_09_02_PM-removebg-preview_cpzhsd.png" alt="Clean Ogbomoso recycling logo">
       <span class="eyebrow">Ìmọ̀ · Education</span>
       <h1>Reduce, Reuse, Recycle</h1>
       <p class="lede">Most of what leaves an Ogbomosoland home isn't really "waste" — food scraps can go back into soil, bottles and scrap metal already have buyers, and a lot of what fills a heap could have been avoided in the first place.</p>
@@ -197,6 +195,7 @@
 <script src="auth.js"></script>
 <script src="data-store.js"></script>
 <script src="components.js"></script>
+<script src="hero-slider.js"></script>
 <script>
 (function () {
   const CATEGORY_META = {
@@ -233,9 +232,12 @@
     resultBox.innerHTML = `<div class="ai-loading"><span class="ai-spinner"></span> Looking at the photo…</div>`;
 
     try {
-      // Reuse the same client-side compression used for report photos —
-      // keeps the upload small and fast, and consistent across the site.
-      const compressedDataUrl = await OgbomoStore.compressPhoto(selectedFile, 640, 0.7);
+      // Shrink the photo first so any phone photo can be sent and seen.
+      const compressedDataUrl = await OgbomoStore.compressForAI(selectedFile);
+      if (!compressedDataUrl) {
+        renderError('This photo could not be read. Try a JPG or PNG, or take a new photo.');
+        return;
+      }
 
       const response = await fetch('/api/classify-waste', {
         method: 'POST',
@@ -244,6 +246,10 @@
       });
 
       if (!response.ok) {
+        if (response.status === 413) {
+          renderError('The photo is still too large. Try a smaller photo.');
+          return;
+        }
         const errData = await response.json().catch(() => ({}));
         renderError(errData.error || 'Something went wrong. Please try again.');
         return;
