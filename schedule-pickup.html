@@ -97,6 +97,7 @@
                 <option value="Blocked drainage">Blocked drainage / gutter</option>
                 <option value="Illegal dumping">Illegal dumping</option>
                 <option value="Blocked access">Blocked access for waste truck</option>
+                <option value="Bad smell from waste">Bad smell from waste</option>
               </select>
             </div>
             <div class="field">
@@ -114,10 +115,14 @@
               <input type="text" id="issue-location" placeholder="Street, market, or nearest landmark" required>
             </div>
             <div class="field">
-              <span>Postcode (required)</span>
-              <input type="text" id="issue-postcode" placeholder="e.g. EK-01-A03-FK-01" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" pattern="[A-Za-z]{2}-?[0-9]{2}-?[A-Za-z0-9]{3}-?[A-Za-z]{2}-?[0-9]{2}" title="Enter an 11-character postcode, such as EK-01-A03-FK-01." required aria-describedby="postcode-help postcode-status">
-              <small id="postcode-help" style="display:block; margin-top:0.35rem; color:var(--ink-soft); font-size:0.8rem;">Required — 11 characters. Don't know yours? <a href="https://postcode.gov.ng/find" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Find my postcode</a>.</small>
+              <span>Postcode (optional)</span>
+              <input type="text" id="issue-postcode" placeholder="e.g. EK-01-A03-FK-01" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" aria-describedby="postcode-help postcode-status">
+              <small id="postcode-help" style="display:block; margin-top:0.35rem; color:var(--ink-soft); font-size:0.8rem;">11 characters. Don't know yours? <a href="https://postcode.gov.ng" target="_blank" rel="noopener" style="color:var(--indigo); text-decoration:underline;">Find my postcode</a>. You can still submit without it.</small>
               <p id="postcode-status" role="status" aria-live="polite" style="margin:0.35rem 0 0; font-size:0.85rem; min-height:1.2em;"></p>
+            </div>
+            <div class="field" style="flex-direction:row; align-items:flex-start; gap:0.6rem;">
+              <input type="checkbox" id="issue-rain" style="margin-top:0.2rem; width:auto;">
+              <label for="issue-rain" style="font-weight:400; font-size:0.9rem;">It rained in the last day or two, and the smell or mess is worse because of it. <span style="display:block; color:var(--ink-soft); font-size:0.8rem;">This helps us learn which areas suffer most after rain, such as around Orita-Naira and Sabo.</span></label>
             </div>
             <div class="field">
               <span>Description</span>
@@ -209,7 +214,7 @@
     document.getElementById(id).addEventListener('change', syncPreview);
   });
 
-  // ── Postcode lookup ───────────────────────────────────────────────────
+  // ── Postcode lookup (optional) ────────────────────────────────────────
   // Calls our own /api/lookup-postcode (the NIPOST key stays on the server).
   // The result is a suggestion only; failure never blocks filing a report.
   const pcInput = document.getElementById('issue-postcode');
@@ -225,17 +230,13 @@
 
   function compactPostcode(v) { return String(v || '').toUpperCase().replace(/[\s-]+/g, ''); }
 
-  function formatPostcode(v) {
-    return compactPostcode(v).replace(/^([A-Z]{2})(\d{2})([A-Z0-9]{3})([A-Z]{2})(\d{2})$/, '$1-$2-$3-$4-$5');
-  }
-
   async function lookupPostcode() {
     const compact = compactPostcode(pcInput.value);
     postcodeResult = null;
     if (!compact) { setPcStatus('', ''); return; }
     if (compact.length < 11) { setPcStatus('Keep typing — a postcode has 11 characters.', ''); return; }
     if (!/^[A-Z]{2}\d{2}[A-Z0-9]{3}[A-Z]{2}\d{2}$/.test(compact)) {
-      setPcStatus('That doesn\'t look like a postcode (example: EK-01-A03-FK-01).', 'warn');
+      setPcStatus('That doesn\'t look like a postcode (example: EK-01-A03-FK-01). You can still submit without it.', 'warn');
       return;
     }
     const mySeq = ++pcSeq;
@@ -244,7 +245,7 @@
       const resp = await fetch('/api/lookup-postcode?code=' + encodeURIComponent(compact));
       const data = await resp.json().catch(() => ({}));
       if (mySeq !== pcSeq) return;
-      if (!resp.ok) { setPcStatus((data.error || 'Could not check that postcode.') + ' Your postcode is still required.', 'warn'); return; }
+      if (!resp.ok) { setPcStatus((data.error || 'Could not check that postcode.') + ' You can still submit.', 'warn'); return; }
       postcodeResult = data;
       if (data.ogbomoLga) {
         setPcStatus('✓ ' + data.postcode + ' — ' + data.ogbomoLga + ' LGA. Your report will go to this council.', 'ok');
@@ -254,14 +255,12 @@
       }
     } catch (_) {
       if (mySeq !== pcSeq) return;
-      setPcStatus('Could not reach the postcode check. Your postcode is still required; please check its format.', 'warn');
+      setPcStatus('Could not reach the postcode check. You can still submit without it.', 'warn');
     }
   }
 
   pcInput.addEventListener('input', () => {
     clearTimeout(pcTimer);
-    postcodeResult = null;
-    pcSeq++;
     pcTimer = setTimeout(lookupPostcode, 500);
   });
 
@@ -281,12 +280,13 @@
       userEmail: user ? user.email : 'anonymous@ogbomo.ng',
       userName: user ? user.name : 'Resident',
       lga: (postcodeResult && postcodeResult.ogbomoLga) || (user && user.lga ? user.lga : (LGA_BY_ZONE_CODE[document.getElementById('zone-picker')?.value] || 'Unspecified')),
-      postcode: postcodeResult ? postcodeResult.postcode : formatPostcode(pcInput.value),
+      postcode: postcodeResult ? postcodeResult.postcode : null,
       type: document.getElementById('issue-type').value,
       stream: document.getElementById('issue-stream').value,
       location: document.getElementById('issue-location').value,
       description: document.getElementById('issue-desc').value,
       photoFile,
+      afterRain: document.getElementById('issue-rain').checked,
     });
 
     document.getElementById('ticket-id-preview').textContent = report.id;
@@ -330,12 +330,12 @@
         <div class="report-body">
           <div class="report-top">
             <div>
-              <div style="font-weight:600;">${r.type}</div>
-              <div class="report-id">${r.id}</div>
+              <div style="font-weight:600;">${OgbomoStore.esc(r.type)}${r.afterRain ? ' <span style="font-family:\'Space Mono\',monospace;font-size:0.65rem;background:#E3EEF3;color:#2B6E7A;border-radius:999px;padding:0.1rem 0.45rem;">after rain</span>' : ''}</div>
+              <div class="report-id">${OgbomoStore.esc(r.id)}</div>
             </div>
             <span class="status-badge ${STATUS_CLASS[r.status]}">${STATUS_LABEL[r.status]}</span>
           </div>
-          <div class="report-meta">${r.location} · ${r.stream} · Filed ${filedDate}</div>
+          <div class="report-meta">${OgbomoStore.esc(r.location)} · ${OgbomoStore.esc(r.stream)} · Filed ${filedDate}</div>
         </div>`;
       list.appendChild(card);
     });
