@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community Interest — Ogbomọ́ Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon-32x32_jelqdg.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/apple-touch-icon_ef4d8v.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="sidebar"></aside>
+  <div class="admin-topbar">
+    <span class="topbar-page-title">Community Interest</span>
+    <div class="topbar-right">
+      <span class="topbar-lga-badge" id="topbar-lga-badge"></span>
+      <span class="topbar-time mono" id="topbar-time"></span>
+    </div>
+  </div>
 
+  <main class="admin-main">
+    <p style="font-size:0.8rem;background:var(--gold-soft);border:1px solid #E6D3A6;border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:1rem;">Hub suggestions, school sign-ups and waste-picker sign-ups sent from the public site. <strong>Demo:</strong> they are stored in this browser only, so you see only entries made on this device. Nothing here is a commitment.</p>
+    <div class="kpi-grid" id="kpis"></div>
+    <div style="display:flex;gap:0.5rem;margin:1.25rem 0 0.8rem;flex-wrap:wrap;" id="tabs"></div>
+    <div class="admin-panel">
+      <table class="data-table">
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="admin-auth.js"></script>
+<script src="data-store.js"></script>
+<script>
+AdminAuth.protectAdminPage();
+document.getElementById('sidebar').innerHTML = buildSidebar('community');
+AdminAuth.renderSidebarUser();
+AdminAuth.markActiveSidebarLink();
+document.getElementById('sidebar-logout-btn').addEventListener('click', AdminAuth.logout);
+function tick(){ document.getElementById('topbar-time').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+tick(); setInterval(tick,1000);
+
+const E = OgbomoStore.esc;
+const me = AdminAuth.getSession();
+const scoped = me.role !== 'super_admin' && me.lga;   // officers and LGA admins see only their LGA
+const KINDS = {
+  hub_suggestion: { label: 'Hub suggestions', cols: ['Place','LGA','Who','Accepts','Note'], row: f => [f.name, f.lga, f.who, (f.materials||[]).join(', '), f.note] },
+  school:         { label: 'Schools',         cols: ['School','LGA','Role','Pupils','Contact'], row: f => [f.name, f.lga, f.role, f.size, f.contact] },
+  picker:         { label: 'Waste pickers',   cols: ['Name','LGA','Area','Collects','Per week','Contact'], row: f => [f.name, f.lga, f.area, (f.materials||[]).join(', '), f.weekly, f.contact] },
+};
+const STATUSES = ['new','contacted','accepted','declined'];
+let current = 'hub_suggestion';
+
+function entries(kind) {
+  return OgbomoStore.getCommunityEntries(kind).filter(e => !scoped || e.fields.lga === me.lga);
+}
+function render() {
+  document.getElementById('topbar-lga-badge').textContent = scoped ? me.lga : 'All LGAs';
+  document.getElementById('kpis').innerHTML = Object.keys(KINDS).map(k =>
+    `<div class="kpi-card"><span class="kpi-label">${KINDS[k].label}</span><span class="kpi-value">${entries(k).length}</span><span class="kpi-change">${entries(k).filter(e=>e.status==='new').length} new</span></div>`).join('');
+  document.getElementById('tabs').innerHTML = Object.keys(KINDS).map(k =>
+    `<button class="btn-admin" data-tab="${k}" style="${k===current?'background:var(--indigo,#1F2E52);color:#fff;':''}">${KINDS[k].label}</button>`).join('');
+  const K = KINDS[current], list = entries(current);
+  document.getElementById('thead').innerHTML = K.cols.map(c=>`<th>${c}</th>`).join('') + '<th>Status</th>';
+  document.getElementById('tbody').innerHTML = list.length ? list.map(en => {
+    const cells = K.row(en.fields).map(v => `<td style="font-size:0.82rem;">${E(v || '—')}</td>`).join('');
+    const opts = STATUSES.map(s => `<option value="${s}"${s===en.status?' selected':''}>${s}</option>`).join('');
+    return `<tr>${cells}<td><select data-id="${E(en.id)}" aria-label="Status" style="padding:0.25rem;border:1px solid var(--line);border-radius:6px;">${opts}</select></td></tr>`;
+  }).join('') : `<tr><td colspan="${K.cols.length+1}" style="text-align:center;color:var(--ink-soft);padding:1.2rem;">Nothing yet</td></tr>`;
+}
+document.getElementById('tabs').addEventListener('click', e => { const t = e.target.getAttribute('data-tab'); if (t) { current = t; render(); } });
+document.getElementById('tbody').addEventListener('change', e => { const id = e.target.getAttribute('data-id'); if (id) { OgbomoStore.setCommunityStatus(id, e.target.value); render(); } });
+render();
+</script>
+</body>
+</html>
