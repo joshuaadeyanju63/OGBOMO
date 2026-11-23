@@ -7,6 +7,11 @@
 <meta name="description" content="Find recycling drop-off points across Ogbomosoland and what materials each accepts.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon-32x32_jelqdg.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/favicon_bdxojd.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dkkiuteyj/image/upload/v1793264661/apple-touch-icon_ef4d8v.png">
+<link rel="manifest" href="site.webmanifest">
 <link rel="stylesheet" href="main.css">
 <style>
   .hub-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:1rem; }
@@ -18,6 +23,14 @@
   .hub-status { align-self:flex-start; font-family:'Space Mono', monospace; font-size:0.66rem; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; }
   .hub-status-proposed { background:var(--gold-soft); color:#93690F; }
   .hub-status-discussion { background:var(--indigo-soft); color:var(--indigo); }
+  .suggest { margin-top:2.2rem; border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:1.5rem; box-shadow:var(--shadow-card); max-width:640px; margin-left:auto; margin-right:auto; }
+  .suggest h2 { font-size:1.15rem; margin:0 0 0.4rem; }
+  .suggest .field { display:flex; flex-direction:column; gap:0.35rem; margin-top:0.85rem; font-size:0.88rem; font-weight:500; }
+  .suggest input[type=text], .suggest select, .suggest textarea { font-family:'Work Sans',sans-serif; font-size:0.95rem; padding:0.65rem 0.8rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:#fff; }
+  .suggest .checks { display:flex; flex-wrap:wrap; gap:0.4rem 1.1rem; font-weight:400; }
+  .suggest .checks label { display:flex; align-items:center; gap:0.35rem; }
+  .suggest .note { font-size:0.8rem; color:var(--ink-soft); margin-top:0.8rem; }
+  .suggest .ok { color:#2F6B45; font-size:0.9rem; margin-top:0.8rem; min-height:1.2em; }
 </style>
 </head>
 <body>
@@ -25,7 +38,7 @@
 <div id="site-header-mount"></div>
 
 <main>
-  <section class="hero" style="padding-bottom:1.5rem;">
+  <section class="hero" data-slides="images/hubs/slide-1.jpg,images/hubs/slide-2.jpg,images/hubs/slide-3.jpg" style="padding-bottom:1.5rem;">
     <div class="container hero-inner">
       <span class="eyebrow">Ibùdó · Hub Locator</span>
       <h1>Recycling drop-off hubs</h1>
@@ -36,6 +49,22 @@
   <section style="padding-top:0;">
     <div class="container">
       <div class="hub-grid" id="hub-grid"></div>
+      <form class="suggest" id="suggest-form">
+        <h2>Suggest a drop-off point</h2>
+        <p class="note" style="margin-top:0;">Know a market, shop, church, school or compound that could host a drop-off point? Tell us. This is a suggestion only. Nothing is agreed until the owner or manager says yes.</p>
+        <div class="field"><label for="s-name">Name of the place</label><input type="text" id="s-name" maxlength="80" required placeholder="e.g. Orita-Naira market, near the gate"></div>
+        <div class="field"><label for="s-lga">Local government</label>
+          <select id="s-lga" required><option value="" disabled selected>Select</option></select></div>
+        <div class="field"><label for="s-who">Who are you?</label>
+          <select id="s-who" required><option value="" disabled selected>Select</option><option>Resident nearby</option><option>Owner or manager of the place</option><option>Community leader</option><option>School or church representative</option><option>Other</option></select></div>
+        <div class="field"><span>What could be dropped off there?</span>
+          <div class="checks" id="s-mats"></div></div>
+        <div class="field"><label for="s-note">Anything we should know? (optional)</label><textarea id="s-note" rows="2" maxlength="300" placeholder="Space, opening hours, who to ask"></textarea></div>
+        <div class="field"><label for="s-contact">Phone or email for follow-up (optional)</label><input type="text" id="s-contact" maxlength="60" autocomplete="off"></div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Send suggestion</button>
+        <p class="ok" id="s-ok" role="status" aria-live="polite"></p>
+        <p class="note">Right now suggestions are saved on this device only and are not yet sent anywhere. A pilot would collect them in a shared database. Only give contact details if you are happy for us to follow up once that exists.</p>
+      </form>
       <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:1.4rem;">A production version of this locator would use a real mapping service (e.g. Google Maps Platform) with live GPS coordinates once hub agreements are in place. This directory view is a placeholder for that.</p>
     </div>
   </section>
@@ -44,7 +73,9 @@
 <div id="site-footer-mount"></div>
 
 <script src="auth.js"></script>
+<script src="data-store.js"></script>
 <script src="components.js"></script>
+<script src="hero-slider.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     if (!Auth.protectPage()) return;
@@ -57,6 +88,27 @@
     { name: 'Ajaawa Collection Point', zone: 'Ogo-Oluwa', accepts: ['Plastic'], status: 'proposed' },
     { name: 'Iresaadu Community Point', zone: 'Surulere', accepts: ['Plastic', 'Metal'], status: 'discussion' }
   ];
+
+  document.getElementById('s-lga').innerHTML += OgbomoStore.LGAS.map(l => `<option>${OgbomoStore.esc(l)}</option>`).join('');
+  document.getElementById('s-mats').innerHTML = OgbomoStore.MATERIALS.map(m =>
+    `<label><input type="checkbox" value="${OgbomoStore.esc(m.label)}"> ${OgbomoStore.esc(m.label)}</label>`).join('');
+  document.getElementById('suggest-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const user = Auth.getUser();
+    const e2 = OgbomoStore.addCommunityEntry('hub_suggestion', {
+      name: document.getElementById('s-name').value,
+      lga: document.getElementById('s-lga').value,
+      who: document.getElementById('s-who').value,
+      materials: [...document.querySelectorAll('#s-mats input:checked')].map(i => i.value),
+      note: document.getElementById('s-note').value,
+      contact: document.getElementById('s-contact').value,
+      submittedBy: user ? user.email : '',
+    });
+    const ok = document.getElementById('s-ok');
+    if (!e2) { ok.style.color = '#A6472D'; ok.textContent = 'Please fill in the place, local government and who you are.'; return; }
+    ok.style.color = '#2F6B45'; ok.textContent = 'Thank you. Your suggestion is saved on this device.';
+    e.target.reset();
+  });
 
   const grid = document.getElementById('hub-grid');
   HUBS.forEach(h => {
